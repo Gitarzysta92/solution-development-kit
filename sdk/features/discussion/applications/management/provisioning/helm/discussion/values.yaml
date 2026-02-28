@@ -1,0 +1,146 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/gitarzysta92/solution-development-kit/discussion
+  pullPolicy: Always
+  tag: latest
+
+imagePullSecrets:
+  - name: ghcr-secret
+
+serviceAccount:
+  create: true
+  name: discussion-service
+
+service:
+  enabled: true
+  type: ClusterIP
+  port: 1338
+  targetPort: 1338
+
+ingress:
+  enabled: true
+  className: ""
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+  hosts:
+    - host: discussion-service.wapps.ai
+      paths:
+        - path: /
+          pathType: Prefix
+
+configMap:
+  enabled: true
+  name: discussion-config
+  data:
+    QUEUE_HOST: rabbitmq.rabbitmq
+    QUEUE_PORT: "5672"
+    DISCUSSION_STORAGE_HOST: http://minio.minio:9000
+    OPA_URL: http://opa.opa:8181
+    MONGO_HOST: mongodb.mongodb
+    MONGO_PORT: "27017"
+    MONGO_DATABASE: wapps
+    DISCUSSION_CORS_ORIGIN: "*"
+
+envFromConfigMap:
+  enabled: true
+  name: discussion-config
+
+env:
+  - name: DISCUSSION_NODE_ENV
+    value: "production"
+  - name: DISCUSSION_HOST
+    value: "0.0.0.0"
+  - name: DISCUSSION_PORT
+    value: "1338"
+
+  - name: DISCUSSION_DATABASE_HOST
+    valueFrom:
+      secretKeyRef:
+        name: discussion-app-secrets
+        key: DISCUSSION_DATABASE_HOST
+  - name: DISCUSSION_DATABASE_PORT
+    valueFrom:
+      secretKeyRef:
+        name: discussion-app-secrets
+        key: DISCUSSION_DATABASE_PORT
+  - name: DISCUSSION_DATABASE_USERNAME
+    valueFrom:
+      secretKeyRef:
+        name: discussion-app-secrets
+        key: DISCUSSION_DATABASE_USERNAME
+  - name: DISCUSSION_DATABASE_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: discussion-app-secrets
+        key: DISCUSSION_DATABASE_PASSWORD
+  - name: DISCUSSION_DATABASE_NAME
+    valueFrom:
+      secretKeyRef:
+        name: discussion-app-secrets
+        key: DISCUSSION_DATABASE_NAME
+
+  - name: QUEUE_USERNAME
+    valueFrom:
+      secretKeyRef:
+        name: rabbitmq-credentials
+        key: username
+  - name: QUEUE_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: rabbitmq-credentials
+        key: password
+
+  - name: DISCUSSION_STORAGE_ACCESSKEY
+    valueFrom:
+      secretKeyRef:
+        name: minio-credentials
+        key: accessKey
+  - name: DISCUSSION_STORAGE_SECRETKEY
+    valueFrom:
+      secretKeyRef:
+        name: minio-credentials
+        key: secretKey
+
+  - name: MONGO_USERNAME
+    valueFrom:
+      secretKeyRef:
+        name: discussion-mongo
+        key: username
+  - name: MONGO_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: discussion-mongo
+        key: password
+
+  - name: INGRESS_AUTH_SECRET
+    valueFrom:
+      secretKeyRef:
+        name: ingress-auth-secret
+        key: secret
+
+resources:
+  requests:
+    memory: 1Gi
+    cpu: 500m
+  limits:
+    memory: 2Gi
+    cpu: 2000m
+
+probes:
+  path: /api/health
+  port: 1338
+  startup:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 30
+  liveness:
+    periodSeconds: 30
+    timeoutSeconds: 10
+    failureThreshold: 3
+  readiness:
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+

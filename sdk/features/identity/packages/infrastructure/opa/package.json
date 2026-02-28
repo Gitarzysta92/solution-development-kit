@@ -1,0 +1,17 @@
+{
+  "name": "@gitarzysta92/sdk-identity-infrastructure-opa",
+  "version": "0.0.0",
+  "description": "OPA policy bundles/types for Wapps services.",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    }
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  }
+}
+

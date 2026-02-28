@@ -1,0 +1,64 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/gitarzysta92/solution-development-kit/account-management
+  pullPolicy: Always
+  tag: latest
+
+imagePullSecrets:
+  - name: ghcr-secret
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 1340
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+  hosts:
+    - host: account-management.host.placeholder
+      paths:
+        - path: /
+          pathType: Prefix
+
+env:
+  - name: ACCOUNT_MANAGEMENT_PORT
+    value: "1340"
+  - name: FIREBASE_PROJECT_ID
+    valueFrom:
+      secretKeyRef:
+        name: firebase-config
+        key: project-id
+  - name: INGRESS_AUTH_SECRET
+    valueFrom:
+      secretKeyRef:
+        name: ingress-auth-secret
+        key: secret
+        optional: true
+  - name: OPA_URL
+    value: "http://opa.default.svc.cluster.local:8181"
+  - name: OPA_IDENTITY_ADMIN_ALLOW_PATH
+    value: "/v1/data/wapps/identity_admin/authz/allow"
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 96Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+
+probes:
+  path: /api/health
+  port: 1340
+  liveness:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+  readiness:
+    initialDelaySeconds: 5
+    periodSeconds: 5
+

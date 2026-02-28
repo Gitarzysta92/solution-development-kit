@@ -1,0 +1,120 @@
+name: 'SDK Applications - Build Image & Publish Helm'
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'sdk/features/discussion/applications/**'
+      - 'sdk/features/identity/applications/**'
+      - 'sdk/features/**/provisioning/helm/**'
+      - '.github/**'
+  workflow_dispatch: {}
+
+env:
+  REGISTRY: ghcr.io
+  CHARTS_REPO: oci://ghcr.io/${{ github.repository_owner }}/solution-development-kit-charts
+
+jobs:
+  build_publish:
+    name: Build & publish (${{ matrix.app }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: discussion
+            nx_project: sdk-features-discussion-applications-management
+            dist_context: dist/sdk/features/discussion/applications/management
+            dockerfile: sdk/features/discussion/applications/management/service/Dockerfile
+            image: solution-development-kit/discussion
+            chart: sdk/features/discussion/applications/management/provisioning/helm/discussion
+
+          - app: discussion-materializer
+            nx_project: sdk-features-discussion-applications-materializer
+            dist_context: dist/sdk/features/discussion/applications/materializer
+            dockerfile: sdk/features/discussion/applications/materializer/service/Dockerfile
+            image: solution-development-kit/discussion-materializer
+            chart: sdk/features/discussion/applications/materializer/provisioning/helm/discussion-materializer
+
+          - app: authenticator
+            nx_project: sdk-features-identity-applications-authenticator
+            dist_context: dist/sdk/features/identity/applications/authenticator
+            dockerfile: sdk/features/identity/applications/authenticator/service/Dockerfile
+            image: solution-development-kit/authenticator
+            chart: sdk/features/identity/applications/authenticator/provisioning/helm/authenticator
+
+          - app: account-management
+            nx_project: sdk-features-identity-applications-management
+            dist_context: dist/sdk/features/identity/applications/management
+            dockerfile: sdk/features/identity/applications/management/service/Dockerfile
+            image: solution-development-kit/account-management
+            chart: sdk/features/identity/applications/management/provisioning/helm/account-management
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: npx nx build ${{ matrix.nx_project }} --configuration=production
+
+      - name: Compute image tags
+        id: tags
+        shell: bash
+        run: |
+          IMAGE="${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.image }}"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+          echo "sha_tag=$IMAGE:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+          if [ "${GITHUB_REF_NAME}" = "main" ]; then
+            echo "extra_tag=$IMAGE:latest" >> "$GITHUB_OUTPUT"
+          else
+            echo "extra_tag=$IMAGE:${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push image
+        uses: ./.github/actions/build-and-push
+        with:
+          context: ${{ matrix.dist_context }}
+          dockerfile: ${{ matrix.dockerfile }}
+          tags: |
+            ${{ steps.tags.outputs.sha_tag }}
+            ${{ steps.tags.outputs.extra_tag }}
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.15.4
+
+      - name: Helm registry login
+        shell: bash
+        run: |
+          helm registry login ${{ env.REGISTRY }} \
+            --username "${{ github.actor }}" \
+            --password "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Publish Helm chart
+        uses: ./.github/actions/publish-helm-chart
+        with:
+          chart_path: ${{ matrix.chart }}
+          registry: ${{ env.CHARTS_REPO }}
+          version: 0.1.${{ github.run_number }}
+          app_version: ${{ github.sha }}
+

@@ -1,0 +1,39 @@
+name: publish-helm-chart
+description: Package and push a Helm chart to an OCI registry
+
+inputs:
+  chart_path:
+    description: Path to chart directory
+    required: true
+  registry:
+    description: OCI registry URL (e.g. oci://ghcr.io/OWNER/charts)
+    required: true
+  version:
+    description: Chart version
+    required: true
+  app_version:
+    description: Chart appVersion
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Lint chart
+      shell: bash
+      run: helm lint "${{ inputs.chart_path }}"
+
+    - name: Package chart
+      shell: bash
+      run: |
+        mkdir -p .helm-packages
+        helm package "${{ inputs.chart_path }}" \
+          --version "${{ inputs.version }}" \
+          --app-version "${{ inputs.app_version }}" \
+          --destination .helm-packages
+
+    - name: Push chart (OCI)
+      shell: bash
+      run: |
+        pkg="$(ls -1 .helm-packages/*.tgz | head -n 1)"
+        helm push "$pkg" "${{ inputs.registry }}"
+

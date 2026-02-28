@@ -1,0 +1,22 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "targetDefaults": {
+    "build": {
+      "dependsOn": ["^build"]
+    },
+    "@nx/js:tsc": {
+      "cache": true,
+      "inputs": ["default", "^default"]
+    }
+  },
+  "projects": {},
+  "plugins": [
+    {
+      "plugin": "@nx/eslint/plugin",
+      "options": {
+        "targetName": "eslint:lint"
+      }
+    }
+  ]
+}
+

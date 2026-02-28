@@ -1,0 +1,86 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "rootDir": ".",
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "resolveJsonModule": true,
+    "target": "es2015",
+    "module": "esnext",
+    "lib": ["es2020", "dom"],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+    "outDir": "./dist/out-tsc",
+    "strict": true,
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noEmitOnError": true,
+    "forceConsistentCasingInFileNames": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "types": [],
+    "paths": {
+      "@apps/shared": ["apps/shared/src/index.ts"],
+
+      "@domains/discussion": ["sdk/features/discussion/core/src/index.ts"],
+      "@domains/identity/authentication": [
+        "sdk/features/identity/libs/authentication/src/index.ts"
+      ],
+      "@domains/identity/management": [
+        "sdk/features/identity/libs/management/src/index.ts"
+      ],
+
+      "@foundation/authority-system": ["sdk/kernel/ontology/authority/src/index.ts"],
+      "@foundation/content-system": ["sdk/kernel/ontology/content/src/index.ts"],
+      "@foundation/governance-system": ["sdk/kernel/ontology/governance/src/index.ts"],
+      "@foundation/identity-system": ["sdk/kernel/ontology/identity/src/index.ts"],
+      "@foundation/primitives": ["sdk/kernel/primitives/src/index.ts"],
+      "@foundation/standard": ["sdk/kernel/standard/src/index.ts"],
+      "@foundation/workflow-system": ["sdk/kernel/ontology/workflow/src/index.ts"],
+
+      "@sdk/kernel/ontology/authority": ["sdk/kernel/ontology/authority/src/index.ts"],
+      "@sdk/kernel/ontology/content": ["sdk/kernel/ontology/content/src/index.ts"],
+      "@sdk/kernel/ontology/governance": ["sdk/kernel/ontology/governance/src/index.ts"],
+      "@sdk/kernel/ontology/identity": ["sdk/kernel/ontology/identity/src/index.ts"],
+      "@sdk/kernel/ontology/workflow": ["sdk/kernel/ontology/workflow/src/index.ts"],
+      "@sdk/kernel/primitives": ["sdk/kernel/primitives/src/index.ts"],
+      "@sdk/kernel/aspects/events": ["sdk/kernel/aspects/events/src/index.ts"],
+      "@sdk/kernel/standard": ["sdk/kernel/standard/src/index.ts"],
+
+      "@sdk/features/discussion/core": ["sdk/features/discussion/core/src/index.ts"],
+      "@sdk/features/identity/core": ["sdk/features/identity/core/src/index.ts"],
+      "@sdk/features/identity/libs/authentication": [
+        "sdk/features/identity/libs/authentication/src/index.ts"
+      ],
+      "@sdk/features/identity/libs/management": [
+        "sdk/features/identity/libs/management/src/index.ts"
+      ],
+
+      "@sdk/platform/queue": ["sdk/platform/queue/src/index.ts"],
+
+      "@sdk/extras/mongo": ["sdk/extras/mongo/src/index.ts"],
+      "@sdk/extras/mysql": ["sdk/extras/mysql/src/index.ts"],
+      "@sdk/extras/minio": ["sdk/extras/minio/src/index.ts"],
+      "@sdk/extras/queue-rabbitmq": ["sdk/extras/queue-rabbitmq/src/index.ts"],
+      "@sdk/extras/platform-queue": ["sdk/extras/platform-queue/src/index.ts"],
+      "@sdk/extras/identity-firebase": [
+        "sdk/features/identity/packages/infrastructure/firebase/src/index.ts"
+      ]
+    }
+  }
+}
+

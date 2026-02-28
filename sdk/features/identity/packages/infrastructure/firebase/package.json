@@ -1,0 +1,17 @@
+{
+  "name": "@gitarzysta92/sdk-identity-infrastructure-firebase",
+  "version": "0.0.0",
+  "description": "Firebase infrastructure adapters for Wapps identity.",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    }
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  }
+}
+

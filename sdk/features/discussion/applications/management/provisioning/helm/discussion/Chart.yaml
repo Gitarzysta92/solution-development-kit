@@ -1,0 +1,7 @@
+apiVersion: v2
+name: discussion
+description: Discussion service (SDK application)
+type: application
+version: 0.1.0
+appVersion: "0.0.0"
+

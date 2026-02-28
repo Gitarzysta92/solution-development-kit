@@ -1,0 +1,109 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/gitarzysta92/solution-development-kit/discussion-materializer
+  pullPolicy: Always
+  tag: latest
+
+imagePullSecrets:
+  - name: ghcr-secret
+
+serviceAccount:
+  create: true
+  name: discussion-materializer
+
+configMap:
+  enabled: true
+  name: discussion-materializer-config
+  data:
+    QUEUE_HOST: rabbitmq.rabbitmq
+    QUEUE_PORT: "5672"
+    DISCUSSION_STORAGE_HOST: http://minio.minio:9000
+    MONGO_HOST: mongodb.mongodb
+    MONGO_PORT: "27017"
+    MONGO_DATABASE: wapps
+
+envFromConfigMap:
+  enabled: true
+  name: discussion-materializer-config
+
+env:
+  - name: QUEUE_USERNAME
+    valueFrom:
+      secretKeyRef:
+        name: rabbitmq-credentials
+        key: username
+  - name: QUEUE_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: rabbitmq-credentials
+        key: password
+
+  - name: DISCUSSION_STORAGE_ACCESSKEY
+    valueFrom:
+      secretKeyRef:
+        name: minio-credentials
+        key: accessKey
+  - name: DISCUSSION_STORAGE_SECRETKEY
+    valueFrom:
+      secretKeyRef:
+        name: minio-credentials
+        key: secretKey
+
+  - name: MYSQL_HOST
+    valueFrom:
+      secretKeyRef:
+        name: discussion-app-secrets
+        key: DISCUSSION_DATABASE_HOST
+  - name: MYSQL_PORT
+    valueFrom:
+      secretKeyRef:
+        name: discussion-app-secrets
+        key: DISCUSSION_DATABASE_PORT
+  - name: MYSQL_DATABASE
+    valueFrom:
+      secretKeyRef:
+        name: discussion-app-secrets
+        key: DISCUSSION_DATABASE_NAME
+  - name: MYSQL_USERNAME
+    valueFrom:
+      secretKeyRef:
+        name: discussion-app-secrets
+        key: DISCUSSION_DATABASE_USERNAME
+  - name: MYSQL_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: discussion-app-secrets
+        key: DISCUSSION_DATABASE_PASSWORD
+
+  - name: MONGO_USERNAME
+    valueFrom:
+      secretKeyRef:
+        name: discussion-materializer-mongo
+        key: username
+  - name: MONGO_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: discussion-materializer-mongo
+        key: password
+
+resources:
+  requests:
+    memory: 256Mi
+    cpu: 100m
+  limits:
+    memory: 512Mi
+    cpu: 500m
+
+probes:
+  liveness:
+    initialDelaySeconds: 60
+    periodSeconds: 30
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readiness:
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3
+

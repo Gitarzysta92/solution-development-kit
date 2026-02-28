@@ -1,0 +1,42 @@
+name: publish-npm-dist
+description: Publish an npm package from a dist folder
+
+inputs:
+  dist_dir:
+    description: Directory containing compiled JS to publish
+    required: true
+  source_manifest:
+    description: Path to source package.json to copy into dist
+    required: true
+  version:
+    description: Version to set in dist/package.json
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Prepare dist package.json
+      shell: bash
+      run: |
+        node -e '
+          const fs = require("fs");
+          const path = require("path");
+          const src = path.resolve(process.env.SOURCE_MANIFEST);
+          const distDir = path.resolve(process.env.DIST_DIR);
+          const version = process.env.VERSION;
+          const pkg = JSON.parse(fs.readFileSync(src, "utf8"));
+          pkg.version = version;
+          delete pkg.private;
+          fs.mkdirSync(distDir, { recursive: true });
+          fs.writeFileSync(path.join(distDir, "package.json"), JSON.stringify(pkg, null, 2) + "\n");
+        '
+      env:
+        DIST_DIR: ${{ inputs.dist_dir }}
+        SOURCE_MANIFEST: ${{ inputs.source_manifest }}
+        VERSION: ${{ inputs.version }}
+
+    - name: Publish
+      shell: bash
+      working-directory: ${{ inputs.dist_dir }}
+      run: npm publish
+
