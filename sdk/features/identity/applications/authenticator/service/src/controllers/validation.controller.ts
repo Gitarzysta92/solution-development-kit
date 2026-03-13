@@ -40,8 +40,9 @@ export class ValidationController {
     res.setHeader('X-User-Email', principal.email || '');
     res.setHeader('X-Auth-Time', principal.authTime?.toString() || '');
 
-    if (this.config.get<string>('INGRESS_AUTH_SECRET')) {
-      res.setHeader('X-Ingress-Auth', this.config.get<string>('INGRESS_AUTH_SECRET'));
+    const ingressSecret = this.config.get<string>('INGRESS_AUTH_SECRET');
+    if (ingressSecret) {
+      res.setHeader('X-Ingress-Auth', ingressSecret);
     }
 
     if (principal.claims) {
@@ -63,8 +64,9 @@ export class ValidationController {
 
     if (!result.ok || result.value.authenticated !== true) {
       res.setHeader('X-Anonymous', 'true');
-      if (this.config.get<string>('INGRESS_AUTH_SECRET')) {
-        res.setHeader('X-Ingress-Auth', this.config.get<string>('INGRESS_AUTH_SECRET'));
+      const ingressSecret = this.config.get<string>('INGRESS_AUTH_SECRET');
+      if (ingressSecret) {
+        res.setHeader('X-Ingress-Auth', ingressSecret);
       }
       return res.status(200).json({ authenticated: false, anonymous: true });
     }
@@ -73,8 +75,9 @@ export class ValidationController {
     res.setHeader('X-User-Id', principal.uid);
     res.setHeader('X-User-Email', principal.email || '');
 
-    if (this.config.get<string>('INGRESS_AUTH_SECRET')) {
-      res.setHeader('X-Ingress-Auth', this.config.get<string>('INGRESS_AUTH_SECRET'));
+    const ingressSecret2 = this.config.get<string>('INGRESS_AUTH_SECRET');
+    if (ingressSecret2) {
+      res.setHeader('X-Ingress-Auth', ingressSecret2);
     }
 
     return res.status(200).json({

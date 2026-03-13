@@ -2,7 +2,7 @@ import { Collection, Document } from 'mongodb';
 import { err, ok, Result } from '@sdk/kernel/standard';
 import { IIdentityNode } from '@sdk/kernel/ontology/identity';
 import { PlatformMongoClient } from '@sdk/extras/mongo';
-import { IIdentityNodeRepository } from '@sdk/features/identity/libs/authentication';
+import { IIdentityNodeRepository } from './ports/identity-node-repository.port';
 
 type IdentityNodeDoc = Document & IIdentityNode;
 

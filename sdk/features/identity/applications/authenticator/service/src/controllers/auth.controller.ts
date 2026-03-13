@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Inject, Post, Query, Res } from '@nestjs/common';
 import type { Response } from 'express';
-import { IAuthenticationStrategy, IdentityAuthenticationService } from '@sdk/features/identity/libs/authentication';
+import { IAuthenticationStrategy } from '@sdk/features/identity/libs/authentication';
+import { AuthenticatorAuthService } from '../identity/authenticator-auth.service';
 import { ConfigService } from '@nestjs/config';
 import {
   ANONYMOUS_AUTHENTICATION_STRATEGY_FACTORY,
@@ -23,7 +24,7 @@ import { TokenRefreshDto } from './models/token-refresh.dto';
 @Controller()
 export class AuthController {
   constructor(
-    @Inject(IDENTITY_AUTH_SERVICE) private readonly authenticationService: IdentityAuthenticationService,
+    @Inject(IDENTITY_AUTH_SERVICE) private readonly authenticationService: AuthenticatorAuthService,
     private readonly config: ConfigService,
     @Inject(GOOGLE_AUTHENTICATION_STRATEGY_FACTORY) private readonly googleAuthenticationStrategyFactory: GoogleAuthenticationStrategyFactory,
     @Inject(GITHUB_AUTHENTICATION_STRATEGY_FACTORY) private readonly githubAuthenticationStrategyFactory: GithubAuthenticationStrategyFactory,

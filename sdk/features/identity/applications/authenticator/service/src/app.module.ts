@@ -38,7 +38,7 @@ import { AnonymousAuthenticationStrategyFactory } from './strategy/anonymous-str
 import { EmailAuthenticationStrategyFactory } from './strategy/email-strategy.factory';
 import { GithubAuthenticationStrategyFactory } from './strategy/github-strategy.factory';
 import { GoogleAuthenticationStrategyFactory } from './strategy/google-strategy.factory';
-import { IdentityAuthenticationService } from '@sdk/features/identity/libs/authentication';
+import { AuthenticatorAuthService } from './identity/authenticator-auth.service';
 import { MysqlIdentityProvider } from './services/mysql-identity-provider';
 
 @Module({
@@ -86,15 +86,21 @@ import { MysqlIdentityProvider } from './services/mysql-identity-provider';
     {
       provide: IDENTITY_AUTH_SERVICE,
       useFactory: (
+        idTokenVerifier: FirebaseAdminIdTokenVerifier,
         sessionGateway: FirebaseRestSessionGateway,
         identityProvider: MysqlIdentityProvider,
         eventsPublisherHolder: IdentityEventsPublisherHolder
       ) => {
         const eventsEmitter = new AuthEventEmitterAdapter(eventsPublisherHolder);
         const authenticationRefreshToken = new FirebaseRefreshTokenAdapter(sessionGateway);
-        return new IdentityAuthenticationService(identityProvider, eventsEmitter, authenticationRefreshToken);
+        return new AuthenticatorAuthService(
+          idTokenVerifier,
+          identityProvider,
+          eventsEmitter,
+          authenticationRefreshToken
+        );
       },
-      inject: [REST_SESSION_GATEWAY, MysqlIdentityProvider, IdentityEventsPublisherHolder],
+      inject: [FirebaseAdminIdTokenVerifier, REST_SESSION_GATEWAY, MysqlIdentityProvider, IdentityEventsPublisherHolder],
     },
     MysqlIdentityProvider,
     {

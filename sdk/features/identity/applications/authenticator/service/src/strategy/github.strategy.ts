@@ -40,8 +40,8 @@ export class GithubAuthenticationStrategy implements IAuthenticationStrategy {
 
     const createdUserResult = await this.firebaseUserProvisioner.createUser({
       email: githubUser.email,
-      displayName: githubUser.name,
-      photoURL: githubUser.picture,
+      name: githubUser.name,
+      picture: githubUser.picture,
       emailVerified: githubUser.emailVerified,
     });
     if (isErr(createdUserResult)) {
