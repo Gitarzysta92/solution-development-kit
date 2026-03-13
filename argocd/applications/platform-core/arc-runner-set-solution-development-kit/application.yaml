@@ -1,12 +1,12 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: arc-runner-set-solution-development-kit
+  name: arc-runner-set-solution-development-kit-config
   namespace: platform
   finalizers:
     - resources-finalizer.argocd.argoproj.io
   annotations:
-    description: "ARC runner scale set: solution-development-kit"
+    description: "ARC runner scale set config app: solution-development-kit"
     argocd.argoproj.io/sync-wave: "25"
 spec:
   project: solution-development-kit
