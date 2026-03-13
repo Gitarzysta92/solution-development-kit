@@ -19,6 +19,18 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Normalize image tags (lowercase)
+      id: normalize
+      shell: bash
+      run: |
+        {
+          echo 'tags<<EOF'
+          echo "${{ inputs.tags }}" | while IFS= read -r t; do
+            [ -n "$t" ] && echo "$(echo "$t" | tr '[:upper:]' '[:lower:]')"
+          done
+          echo 'EOF'
+        } >> "$GITHUB_OUTPUT"
+
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
@@ -28,7 +40,7 @@ runs:
         context: ${{ inputs.context }}
         file: ${{ inputs.dockerfile }}
         push: ${{ inputs.push }}
-        tags: ${{ inputs.tags }}
+        tags: ${{ steps.normalize.outputs.tags }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
 

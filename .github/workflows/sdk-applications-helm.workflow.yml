@@ -12,12 +12,12 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  CHARTS_REPO: oci://ghcr.io/${{ github.repository_owner }}/solution-development-kit-charts
 
 jobs:
+  # Requires repo-level variables NEXUS_HOST, NEXUS_HELM_REGISTRY and secrets NEXUS_USERNAME, NEXUS_PASSWORD. See .github/SECRETS.md.
   build_publish:
     name: Build & publish (${{ matrix.app }})
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     permissions:
       contents: read
       packages: write
@@ -74,6 +74,7 @@ jobs:
         shell: bash
         run: |
           IMAGE="${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.image }}"
+          IMAGE="$(echo "$IMAGE" | tr '[:upper:]' '[:lower:]')"
           echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
           echo "sha_tag=$IMAGE:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
           if [ "${GITHUB_REF_NAME}" = "main" ]; then
@@ -103,18 +104,29 @@ jobs:
         with:
           version: v3.15.4
 
-      - name: Helm registry login
+      - name: Log in to Nexus Helm registry
         shell: bash
         run: |
-          helm registry login ${{ env.REGISTRY }} \
-            --username "${{ github.actor }}" \
-            --password "${{ secrets.GITHUB_TOKEN }}"
+          helm registry login "${{ vars.NEXUS_HOST }}" \
+            --username "${{ secrets.NEXUS_USERNAME }}" \
+            --password "${{ secrets.NEXUS_PASSWORD }}"
 
-      - name: Publish Helm chart
+      - name: Publish Helm chart to Nexus
+        id: publish
         uses: ./.github/actions/publish-helm-chart
         with:
           chart_path: ${{ matrix.chart }}
-          registry: ${{ env.CHARTS_REPO }}
+          registry: ${{ vars.NEXUS_HELM_REGISTRY }}
           version: 0.1.${{ github.run_number }}
           app_version: ${{ github.sha }}
+
+      - name: Publish summary
+        run: |
+          echo "### Chart published" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Field | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-------|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Chart | ${{ matrix.app }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Chart version | 0.1.${{ github.run_number }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| App version | ${{ github.sha }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Registry | \`${{ vars.NEXUS_HELM_REGISTRY }}\` |" >> "$GITHUB_STEP_SUMMARY"
 
