@@ -1,12 +1,12 @@
 replicaCount: 2
 
 image:
-  repository: ghcr.io/gitarzysta92/solution-development-kit/authenticator
+  repository: nexus.dev.threesixty.dev/repository/solution-development-kit-images/features/identity/authenticator
   pullPolicy: Always
   tag: latest
 
 imagePullSecrets:
-  - name: ghcr-secret
+  - name: nexus-pull-secret
 
 service:
   type: ClusterIP

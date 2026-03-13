@@ -1,12 +1,12 @@
 replicaCount: 1
 
 image:
-  repository: ghcr.io/gitarzysta92/solution-development-kit/account-management
+  repository: nexus.dev.threesixty.dev/repository/solution-development-kit-images/features/identity/account-management
   pullPolicy: Always
   tag: latest
 
 imagePullSecrets:
-  - name: ghcr-secret
+  - name: nexus-pull-secret
 
 service:
   type: ClusterIP

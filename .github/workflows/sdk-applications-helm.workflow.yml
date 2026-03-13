@@ -10,22 +10,19 @@ on:
       - '.github/**'
   workflow_dispatch: {}
 
-env:
-  REGISTRY: ghcr.io
-
 jobs:
-  # Requires repo-level variables NEXUS_HOST, NEXUS_HELM_REGISTRY and secrets NEXUS_USERNAME, NEXUS_PASSWORD. See .github/SECRETS.md.
+  # Requires repo-level variables NEXUS_HOST, NEXUS_DOCKER_REGISTRY, NEXUS_HELM_REGISTRY and secrets NEXUS_USERNAME, NEXUS_PASSWORD. See .github/SECRETS.md.
   build_publish:
     name: Build & publish (${{ matrix.app }})
     runs-on: self-hosted
     permissions:
       contents: read
-      packages: write
     strategy:
       fail-fast: false
       matrix:
         include:
           - app: discussion
+            image_path: features/discussion/discussion
             nx_project: sdk-features-discussion-applications-management
             dist_context: dist/sdk/features/discussion/applications/management
             dockerfile: sdk/features/discussion/applications/management/service/Dockerfile
@@ -33,6 +30,7 @@ jobs:
             chart: sdk/features/discussion/applications/management/provisioning/helm/discussion
 
           - app: discussion-materializer
+            image_path: features/discussion/discussion-materializer
             nx_project: sdk-features-discussion-applications-materializer
             dist_context: dist/sdk/features/discussion/applications/materializer
             dockerfile: sdk/features/discussion/applications/materializer/service/Dockerfile
@@ -40,6 +38,7 @@ jobs:
             chart: sdk/features/discussion/applications/materializer/provisioning/helm/discussion-materializer
 
           - app: authenticator
+            image_path: features/identity/authenticator
             nx_project: sdk-features-identity-applications-authenticator
             dist_context: dist/sdk/features/identity/applications/authenticator
             dockerfile: sdk/features/identity/applications/authenticator/service/Dockerfile
@@ -47,6 +46,7 @@ jobs:
             chart: sdk/features/identity/applications/authenticator/provisioning/helm/authenticator
 
           - app: account-management
+            image_path: features/identity/account-management
             nx_project: sdk-features-identity-applications-management
             dist_context: dist/sdk/features/identity/applications/management
             dockerfile: sdk/features/identity/applications/management/service/Dockerfile
@@ -69,11 +69,11 @@ jobs:
       - name: Build application
         run: npx nx build ${{ matrix.nx_project }} --configuration=production
 
-      - name: Compute image tags
+      - name: Compute image tags (Nexus)
         id: tags
         shell: bash
         run: |
-          IMAGE="${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.image }}"
+          IMAGE="${{ vars.NEXUS_DOCKER_REGISTRY }}/${{ matrix.image_path }}"
           IMAGE="$(echo "$IMAGE" | tr '[:upper:]' '[:lower:]')"
           echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
           echo "sha_tag=$IMAGE:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
@@ -83,12 +83,12 @@ jobs:
             echo "extra_tag=$IMAGE:${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Log in to GHCR
+      - name: Log in to Nexus Docker registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ${{ vars.NEXUS_HOST }}
+          username: ${{ secrets.NEXUS_USERNAME }}
+          password: ${{ secrets.NEXUS_PASSWORD }}
 
       - name: Build & push image
         uses: ./.github/actions/build-and-push
@@ -128,5 +128,6 @@ jobs:
           echo "| Chart | ${{ matrix.app }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Chart version | 0.1.${{ github.run_number }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| App version | ${{ github.sha }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Registry | \`${{ vars.NEXUS_HELM_REGISTRY }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Image registry | \`${{ vars.NEXUS_DOCKER_REGISTRY }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Chart registry | \`${{ vars.NEXUS_HELM_REGISTRY }}\` |" >> "$GITHUB_STEP_SUMMARY"
 

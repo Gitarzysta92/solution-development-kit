@@ -1,12 +1,12 @@
 replicaCount: 1
 
 image:
-  repository: ghcr.io/gitarzysta92/solution-development-kit/discussion
+  repository: nexus.dev.threesixty.dev/repository/solution-development-kit-images/features/discussion/discussion
   pullPolicy: Always
   tag: latest
 
 imagePullSecrets:
-  - name: ghcr-secret
+  - name: nexus-pull-secret
 
 serviceAccount:
   create: true
