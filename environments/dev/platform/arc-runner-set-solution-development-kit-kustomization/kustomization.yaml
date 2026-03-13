@@ -1,0 +1,44 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: platform
+
+commonLabels:
+  app.kubernetes.io/part-of: solution-development-kit
+  app.kubernetes.io/component: ci
+  app.kubernetes.io/name: arc-runner-set-solution-development-kit
+
+resources:
+  # Kustomize git syntax: `<repo>//<path-in-repo>?ref=<branch|tag|sha>`.
+  # The double slash means "use this subdirectory from that Git repository".
+  - github.com/Gitarzysta92/platform-development-kit//cluster/arc/runner-scale-set-application?ref=main
+
+patches:
+  - patch: |-
+      - op: replace
+        path: /metadata/name
+        value: arc-runner-set-solution-development-kit
+      - op: replace
+        path: /spec/project
+        value: solution-development-kit
+      - op: replace
+        path: /spec/destination/namespace
+        value: solution-development-kit
+      - op: replace
+        path: /spec/source/helm/valuesObject/githubConfigUrl
+        value: https://github.com/Gitarzysta92/solution-development-kit
+      - op: replace
+        path: /spec/source/helm/valuesObject/githubConfigSecret/secretRef
+        value: arc-github-auth-solution-development-kit
+      - op: replace
+        path: /spec/source/helm/valuesObject/runnerScaleSetName
+        value: arc-runner-set-solution-development-kit
+      - op: replace
+        path: /spec/source/helm/valuesObject/minRunners
+        value: 1
+      - op: replace
+        path: /spec/source/helm/valuesObject/maxRunners
+        value: 6
+    target:
+      kind: Application
+      name: arc-runner-set-client
