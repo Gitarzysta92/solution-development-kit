@@ -33,6 +33,11 @@ patches:
       - op: replace
         path: /spec/source/helm/valuesObject/runnerScaleSetName
         value: arc-runner-set-solution-development-kit
+      - op: add
+        path: /spec/source/helm/valuesObject/controllerServiceAccount
+        value:
+          namespace: arc-systems
+          name: arc-controller-gha-rs-controller
       - op: replace
         path: /spec/source/helm/valuesObject/minRunners
         value: 1
