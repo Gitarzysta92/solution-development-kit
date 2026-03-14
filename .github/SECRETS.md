@@ -41,3 +41,18 @@ This document lists all secrets and variables used by workflows in this reposito
 - [ ] `NEXUS_PASSWORD` (secret) set to the CI user’s password or token.
 - [ ] Self-hosted runner has Docker and network access to Nexus.
 - [ ] In Nexus: create a Docker repository (e.g. docker-hosted) if you only had Helm before; CI user must have push access to it.
+
+---
+
+## Workflow: ARC Runner Auth - Bootstrap (SDK)
+
+**File:** `.github/workflows/arc-runner-auth-bootstrap.workflow.yml`  
+**Runner:** `self-hosted`
+
+This workflow creates/updates Kubernetes secret `arc-github-auth-solution-development-kit` in namespace `solution-development-kit`.
+
+### Environment secret
+
+| Name | Description |
+|------|-------------|
+| `ARC_GITHUB_TOKEN` | GitHub token used by ARC runner scale set auth (`github_token` key in Kubernetes secret). |
