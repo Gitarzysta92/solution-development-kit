@@ -28,7 +28,7 @@ patches:
         path: /spec/source/helm/valuesObject/githubConfigUrl
         value: https://github.com/Gitarzysta92/solution-development-kit
       - op: replace
-        path: /spec/source/helm/valuesObject/githubConfigSecret/secretRef
+        path: /spec/source/helm/valuesObject/githubConfigSecret
         value: arc-github-auth-solution-development-kit
       - op: replace
         path: /spec/source/helm/valuesObject/runnerScaleSetName
