@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: nexus.dev.threesixty.dev/repository/solution-development-kit-images/features/identity/account-management
+  repository: solution-development-kit-images.nexus.dev.threesixty.dev/features/identity/account-management
   pullPolicy: Always
   tag: latest
 

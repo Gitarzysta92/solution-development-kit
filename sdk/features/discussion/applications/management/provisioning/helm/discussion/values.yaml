@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: nexus.dev.threesixty.dev/repository/solution-development-kit-images/features/discussion/discussion
+  repository: solution-development-kit-images.nexus.dev.threesixty.dev/features/discussion/management
   pullPolicy: Always
   tag: latest
 

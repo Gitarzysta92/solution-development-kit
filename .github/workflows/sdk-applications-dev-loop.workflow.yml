@@ -1,0 +1,158 @@
+name: 'SDK Applications - Dev Loop'
+
+on:
+  workflow_dispatch:
+    inputs:
+      app:
+        description: 'Application to process'
+        required: true
+        type: choice
+        default: authenticator
+        options:
+          - authenticator
+          - account-management
+          - discussion
+          - discussion-materializer
+      mode:
+        description: 'Execution mode'
+        required: true
+        type: choice
+        default: connectivity
+        options:
+          - connectivity
+          - build
+          - build-and-push
+
+jobs:
+  dev_loop:
+    name: Dev loop (${{ inputs.app }} / ${{ inputs.mode }})
+    runs-on: arc-runner-set-solution-development-kit
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve application configuration
+        id: cfg
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          case "${{ inputs.app }}" in
+            discussion)
+              echo "image_path=features/discussion/management" >> "$GITHUB_OUTPUT"
+              echo "nx_project=sdk-features-discussion-applications-management" >> "$GITHUB_OUTPUT"
+              echo "dist_context=dist/sdk/features/discussion/applications/management" >> "$GITHUB_OUTPUT"
+              echo "dockerfile=sdk/features/discussion/applications/management/service/Dockerfile" >> "$GITHUB_OUTPUT"
+              ;;
+            discussion-materializer)
+              echo "image_path=features/discussion/discussion-materializer" >> "$GITHUB_OUTPUT"
+              echo "nx_project=sdk-features-discussion-applications-materializer" >> "$GITHUB_OUTPUT"
+              echo "dist_context=dist/sdk/features/discussion/applications/materializer" >> "$GITHUB_OUTPUT"
+              echo "dockerfile=sdk/features/discussion/applications/materializer/service/Dockerfile" >> "$GITHUB_OUTPUT"
+              ;;
+            authenticator)
+              echo "image_path=features/identity/authenticator" >> "$GITHUB_OUTPUT"
+              echo "nx_project=sdk-features-identity-applications-authenticator" >> "$GITHUB_OUTPUT"
+              echo "dist_context=dist/sdk/features/identity/applications/authenticator" >> "$GITHUB_OUTPUT"
+              echo "dockerfile=sdk/features/identity/applications/authenticator/service/Dockerfile" >> "$GITHUB_OUTPUT"
+              ;;
+            account-management)
+              echo "image_path=features/identity/account-management" >> "$GITHUB_OUTPUT"
+              echo "nx_project=sdk-features-identity-applications-management" >> "$GITHUB_OUTPUT"
+              echo "dist_context=dist/sdk/features/identity/applications/management" >> "$GITHUB_OUTPUT"
+              echo "dockerfile=sdk/features/identity/applications/management/service/Dockerfile" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "Unsupported app: ${{ inputs.app }}"
+              exit 1
+              ;;
+          esac
+
+      - name: Preflight DNS and Docker registry endpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "Checking host resolution for ${NEXUS_HOST}..."
+          getent hosts "${NEXUS_HOST}" || true
+
+          echo "Checking Docker registry endpoint https://${NEXUS_HOST}/v2/ ..."
+          STATUS="$(curl -ksS -o /dev/null -w "%{http_code}" "https://${NEXUS_HOST}/v2/" || true)"
+          echo "HTTP status: ${STATUS}"
+          if [ "${STATUS}" != "200" ] && [ "${STATUS}" != "401" ]; then
+            echo "Expected Docker registry endpoint to return 200/401, got ${STATUS}."
+            echo "NEXUS_HOST likely points to Nexus UI ingress instead of Docker registry endpoint."
+            exit 1
+          fi
+        env:
+          NEXUS_HOST: ${{ vars.NEXUS_HOST }}
+
+      - name: Log in to Nexus Docker registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ vars.NEXUS_HOST }}
+          username: ${{ secrets.NEXUS_USERNAME }}
+          password: ${{ secrets.NEXUS_PASSWORD }}
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.15.4
+
+      - name: Log in to Nexus Helm registry
+        shell: bash
+        run: |
+          helm registry login "${{ vars.NEXUS_HOST }}" \
+            --username "${{ secrets.NEXUS_USERNAME }}" \
+            --password "${{ secrets.NEXUS_PASSWORD }}"
+
+      - name: Set up Node.js
+        if: ${{ inputs.mode != 'connectivity' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        if: ${{ inputs.mode != 'connectivity' }}
+        run: npm ci
+
+      - name: Build application
+        if: ${{ inputs.mode != 'connectivity' }}
+        run: npx nx build ${{ steps.cfg.outputs.nx_project }} --configuration=production
+
+      - name: Compute dev-loop image tag
+        if: ${{ inputs.mode == 'build-and-push' }}
+        id: tags
+        shell: bash
+        run: |
+          IMAGE="${{ vars.NEXUS_DOCKER_REGISTRY }}/${{ steps.cfg.outputs.image_path }}"
+          IMAGE="$(echo "$IMAGE" | tr '[:upper:]' '[:lower:]')"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+          echo "tag=$IMAGE:devloop-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_OUTPUT"
+
+      - name: Build & optionally push image
+        if: ${{ inputs.mode == 'build-and-push' }}
+        uses: ./.github/actions/build-and-push
+        with:
+          context: ${{ steps.cfg.outputs.dist_context }}
+          dockerfile: ${{ steps.cfg.outputs.dockerfile }}
+          tags: ${{ steps.tags.outputs.tag }}
+          push: "true"
+
+      - name: Publish summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "### SDK dev loop result"
+            echo "| Field | Value |"
+            echo "|---|---|"
+            echo "| App | ${{ inputs.app }} |"
+            echo "| Mode | ${{ inputs.mode }} |"
+            echo "| Nexus host | \`${{ vars.NEXUS_HOST }}\` |"
+            echo "| Docker registry | \`${{ vars.NEXUS_DOCKER_REGISTRY }}\` |"
+            echo "| Helm registry | \`${{ vars.NEXUS_HELM_REGISTRY }}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"

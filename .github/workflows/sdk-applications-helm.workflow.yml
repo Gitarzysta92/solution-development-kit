@@ -24,7 +24,7 @@ jobs:
       matrix:
         include:
           - app: discussion
-            image_path: features/discussion/discussion
+            image_path: features/discussion/management
             nx_project: sdk-features-discussion-applications-management
             dist_context: dist/sdk/features/discussion/applications/management
             dockerfile: sdk/features/discussion/applications/management/service/Dockerfile

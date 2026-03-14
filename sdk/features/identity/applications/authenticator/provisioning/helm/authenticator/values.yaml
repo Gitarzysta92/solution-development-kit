@@ -1,7 +1,7 @@
 replicaCount: 2
 
 image:
-  repository: nexus.dev.threesixty.dev/repository/solution-development-kit-images/features/identity/authenticator
+  repository: solution-development-kit-images.nexus.dev.threesixty.dev/features/identity/authenticator
   pullPolicy: Always
   tag: latest
 
