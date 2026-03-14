@@ -12,9 +12,10 @@ on:
 
 jobs:
   # Requires repo-level variables NEXUS_HOST, NEXUS_DOCKER_REGISTRY, NEXUS_HELM_REGISTRY and secrets NEXUS_USERNAME, NEXUS_PASSWORD. See .github/SECRETS.md.
+  # Uses ARC runner scale set (solution-development-kit) for image build/push.
   build_publish:
     name: Build & publish (${{ matrix.app }})
-    runs-on: self-hosted
+    runs-on: arc-runner-set-solution-development-kit
     permissions:
       contents: read
     strategy:
