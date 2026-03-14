@@ -6,9 +6,19 @@ import { ContentNodeEntity } from '../discussions/infrastructure/content-node.en
 import { ContentNodeState, ContentNodeVisibility } from '@sdk/kernel/ontology/content';
 import { Uuidv7, isErr } from '@sdk/kernel/standard';
 import { DiscussionsService } from '../discussions/discussions.service';
-import { categories, tags } from '@data';
-import { CategoryTreeDto } from '@domains/catalog/category';
-import { TagOptionDto } from '@domains/catalog/tags';
+
+/** Seed-only DTOs for demo discussion content (no dependency on catalog/domains). */
+interface SeedTagOption {
+  id: number;
+  name: string;
+  slug: string;
+}
+interface SeedCategoryTree {
+  id: number;
+  slug: string;
+  name: string;
+  childs: SeedCategoryTree[];
+}
 
 @Injectable()
 export class SeedService {
@@ -85,28 +95,24 @@ export class SeedService {
   }
 
   private buildSeedContent(): Record<string, unknown> {
-    const fallbackTags: TagOptionDto[] = [
+    const fallbackTags: SeedTagOption[] = [
       { id: 0, name: 'Discussion', slug: 'discussion' },
       { id: 1, name: 'Community', slug: 'community' },
       { id: 2, name: 'Feedback', slug: 'feedback' },
     ];
-    const fallbackCategories: CategoryTreeDto[] = [
+    const fallbackCategories: SeedCategoryTree[] = [
       { id: 0, slug: 'general', name: 'General', childs: [] },
     ];
 
-    const availableTags = Array.isArray(tags) && tags.length > 0 ? tags : fallbackTags;
-    const availableCategories =
-      Array.isArray(categories) && categories.length > 0 ? categories : fallbackCategories;
-
-    const leafCategories = this.flattenCategories(availableCategories);
+    const leafCategories = this.flattenCategories(fallbackCategories);
     const selectedCategory = leafCategories[0] ?? fallbackCategories[0];
-    const selectedTags = availableTags.slice(0, 3);
+    const selectedTags = fallbackTags.slice(0, 3);
 
     return {
       type: 'seed',
       title: `Seeded discussion: ${selectedCategory.name}`,
       text:
-        'This discussion was seeded from @data. Set DISCUSSION_SEED_DEMO_DATA=false to disable.',
+        'This discussion was seeded with demo data. Set DISCUSSION_SEED_DEMO_DATA=false to disable.',
       category: {
         id: selectedCategory.id,
         slug: selectedCategory.slug,
@@ -116,8 +122,8 @@ export class SeedService {
     };
   }
 
-  private flattenCategories(nodes: CategoryTreeDto[]): Array<Pick<CategoryTreeDto, 'id' | 'slug' | 'name'>> {
-    const result: Array<Pick<CategoryTreeDto, 'id' | 'slug' | 'name'>> = [];
+  private flattenCategories(nodes: SeedCategoryTree[]): Array<Pick<SeedCategoryTree, 'id' | 'slug' | 'name'>> {
+    const result: Array<Pick<SeedCategoryTree, 'id' | 'slug' | 'name'>> = [];
     for (const node of nodes) {
       if (Array.isArray(node.childs) && node.childs.length > 0) {
         result.push(...this.flattenCategories(node.childs));
