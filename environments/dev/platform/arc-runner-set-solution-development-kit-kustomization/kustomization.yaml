@@ -34,9 +34,6 @@ patches:
         path: /spec/source/helm/valuesObject/runnerScaleSetName
         value: arc-runner-set-solution-development-kit
       - op: replace
-        path: /spec/source/helm/valuesObject/minRunners
-        value: 1
-      - op: replace
         path: /spec/source/helm/valuesObject/maxRunners
         value: 6
     target:
