@@ -19,7 +19,8 @@ This document lists all secrets and variables used by workflows in this reposito
 
 | Name                 | Description | Example |
 |----------------------|-------------|---------|
-| `NEXUS_HOST`        | Docker registry host (no scheme, no path) for the tenant connector endpoint. | `solution-development-kit-images.nexus.dev.threesixty.dev` |
+| `NEXUS_DOCKER_HOST` | Docker registry host (no scheme, no path) for the tenant connector endpoint. | `solution-development-kit-images.nexus.dev.threesixty.dev` |
+| `NEXUS_HELM_HOST`   | Nexus host (no scheme, no path) used for Helm OCI login. | `nexus.dev.threesixty.dev` |
 | `NEXUS_DOCKER_REGISTRY` | Full Docker registry base URL (no scheme, no trailing slash). Image URL will be `$NEXUS_DOCKER_REGISTRY/$image_path` (e.g. `.../features/identity/authenticator`). | `solution-development-kit-images.nexus.dev.threesixty.dev` |
 | `NEXUS_HELM_REGISTRY` | Full OCI registry URL for Helm chart push. | `oci://nexus.dev.threesixty.dev/repository/sdk-helm` |
 
@@ -34,7 +35,8 @@ This document lists all secrets and variables used by workflows in this reposito
 
 ## Checklist
 
-- [ ] `NEXUS_HOST` (variable) set to your tenant docker registry host.
+- [ ] `NEXUS_DOCKER_HOST` (variable) set to your tenant docker registry host.
+- [ ] `NEXUS_HELM_HOST` (variable) set to your Helm OCI login host.
 - [ ] `NEXUS_DOCKER_REGISTRY` (variable) set to the full Docker registry base URL.
 - [ ] `NEXUS_HELM_REGISTRY` (variable) set to the OCI URL of your chart repo.
 - [ ] `NEXUS_USERNAME` (secret) set to the CI user.
