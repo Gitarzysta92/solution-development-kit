@@ -51,8 +51,11 @@ This document lists all secrets and variables used by workflows in this reposito
 
 This workflow creates/updates Kubernetes secret `arc-github-auth-solution-development-kit` in namespace `solution-development-kit`.
 
-### Environment secret
+### Environment secrets (preferred: GitHub App)
 
 | Name | Description |
 |------|-------------|
-| `ARC_GITHUB_TOKEN` | GitHub token used by ARC runner scale set auth (`github_token` key in Kubernetes secret). |
+| `ARC_GITHUB_APP_ID` | GitHub App ID (or client ID) for tenant-scoped ARC auth. |
+| `ARC_GITHUB_APP_INSTALLATION_ID` | Installation ID of the GitHub App for this repository/org. |
+| `ARC_GITHUB_APP_PRIVATE_KEY` | PEM private key for the GitHub App installation. |
+| `ARC_GITHUB_TOKEN` | Optional PAT fallback used only if App secrets are not provided. |
