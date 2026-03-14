@@ -28,29 +28,17 @@ jobs:
         shell: bash
         env:
           ARC_GITHUB_TOKEN: ${{ secrets.ARC_GITHUB_TOKEN }}
-          ARC_GITHUB_APP_ID: ${{ secrets.ARC_GITHUB_APP_ID }}
-          ARC_GITHUB_APP_INSTALLATION_ID: ${{ secrets.ARC_GITHUB_APP_INSTALLATION_ID }}
-          ARC_GITHUB_APP_PRIVATE_KEY: ${{ secrets.ARC_GITHUB_APP_PRIVATE_KEY }}
         run: |
           set -euo pipefail
-          if [ -n "${ARC_GITHUB_APP_ID:-}" ] && [ -n "${ARC_GITHUB_APP_INSTALLATION_ID:-}" ] && [ -n "${ARC_GITHUB_APP_PRIVATE_KEY:-}" ]; then
-            echo "Using GitHub App credentials for ARC auth secret."
-            kubectl create secret generic arc-github-auth-solution-development-kit \
-              --namespace=solution-development-kit \
-              --from-literal=github_app_id="${ARC_GITHUB_APP_ID}" \
-              --from-literal=github_app_installation_id="${ARC_GITHUB_APP_INSTALLATION_ID}" \
-              --from-literal=github_app_private_key="${ARC_GITHUB_APP_PRIVATE_KEY}" \
-              --dry-run=client -o yaml | kubectl apply -f -
-          elif [ -n "${ARC_GITHUB_TOKEN:-}" ]; then
-            echo "Using PAT fallback for ARC auth secret."
-            kubectl create secret generic arc-github-auth-solution-development-kit \
-              --namespace=solution-development-kit \
-              --from-literal=github_token="${ARC_GITHUB_TOKEN}" \
-              --dry-run=client -o yaml | kubectl apply -f -
-          else
-            echo "::error::Set GitHub App secrets (ARC_GITHUB_APP_ID, ARC_GITHUB_APP_INSTALLATION_ID, ARC_GITHUB_APP_PRIVATE_KEY) or ARC_GITHUB_TOKEN."
+          if [ -z "${ARC_GITHUB_TOKEN:-}" ]; then
+            echo "::error::ARC_GITHUB_TOKEN is empty. Set it in GitHub Environment secrets."
             exit 1
           fi
+
+          kubectl create secret generic arc-github-auth-solution-development-kit \
+            --namespace=solution-development-kit \
+            --from-literal=github_token="${ARC_GITHUB_TOKEN}" \
+            --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Verify secret presence
         shell: bash
