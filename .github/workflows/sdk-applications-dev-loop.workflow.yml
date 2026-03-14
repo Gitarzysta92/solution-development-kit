@@ -81,7 +81,12 @@ jobs:
           echo "Checking Docker registry endpoint https://${NEXUS_HOST}/v2/ ..."
           STATUS="$(curl -ksS -o /dev/null -w "%{http_code}" "https://${NEXUS_HOST}/v2/" || true)"
           echo "HTTP status: ${STATUS}"
-          if [ "${STATUS}" != "200" ] && [ "${STATUS}" != "401" ]; then
+          # Some runner images can report HTTP 000 during preflight DNS lookup
+          # while docker login (dind daemon) still resolves correctly. Keep
+          # preflight informative and let docker login be the authoritative gate.
+          if [ "${STATUS}" = "000" ]; then
+            echo "Warning: preflight endpoint check returned HTTP 000; continuing to docker login validation."
+          elif [ "${STATUS}" != "200" ] && [ "${STATUS}" != "401" ]; then
             echo "Expected Docker registry endpoint to return 200/401, got ${STATUS}."
             echo "NEXUS_HOST likely points to Nexus UI ingress instead of Docker registry endpoint."
             exit 1
