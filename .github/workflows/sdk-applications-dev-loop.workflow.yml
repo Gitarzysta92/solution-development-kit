@@ -75,11 +75,11 @@ jobs:
         run: |
           set -euo pipefail
 
-          echo "Checking host resolution for ${NEXUS_DOCKER_HOST}..."
-          getent hosts "${NEXUS_DOCKER_HOST}" || true
+          echo "Checking host resolution for ${DOCKER_HOSTNAME}..."
+          getent hosts "${DOCKER_HOSTNAME}" || true
 
-          echo "Checking Docker registry endpoint https://${NEXUS_DOCKER_HOST}/v2/ ..."
-          STATUS="$(curl -ksS -o /dev/null -w "%{http_code}" "https://${NEXUS_DOCKER_HOST}/v2/" || true)"
+          echo "Checking Docker registry endpoint https://${DOCKER_HOSTNAME}/v2/ ..."
+          STATUS="$(curl -ksS -o /dev/null -w "%{http_code}" "https://${DOCKER_HOSTNAME}/v2/" || true)"
           echo "HTTP status: ${STATUS}"
           # Some runner images can report HTTP 000 during preflight DNS lookup
           # while docker login (dind daemon) still resolves correctly. Keep
@@ -88,16 +88,16 @@ jobs:
             echo "Warning: preflight endpoint check returned HTTP 000; continuing to docker login validation."
           elif [ "${STATUS}" != "200" ] && [ "${STATUS}" != "401" ]; then
             echo "Expected Docker registry endpoint to return 200/401, got ${STATUS}."
-            echo "NEXUS_DOCKER_HOST likely points to Nexus UI ingress instead of Docker registry endpoint."
+            echo "Configured Docker host likely points to Nexus UI ingress instead of Docker registry endpoint."
             exit 1
           fi
         env:
-          NEXUS_DOCKER_HOST: ${{ vars.NEXUS_DOCKER_HOST }}
+          DOCKER_HOSTNAME: ${{ vars.NEXUS_DOCKER_HOST || vars.NEXUS_HOST }}
 
       - name: Log in to Nexus Docker registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ vars.NEXUS_DOCKER_HOST }}
+          registry: ${{ vars.NEXUS_DOCKER_HOST || vars.NEXUS_HOST }}
           username: ${{ secrets.NEXUS_USERNAME }}
           password: ${{ secrets.NEXUS_PASSWORD }}
 
@@ -109,7 +109,7 @@ jobs:
       - name: Log in to Nexus Helm registry
         shell: bash
         run: |
-          helm registry login "${{ vars.NEXUS_HELM_HOST }}" \
+          helm registry login "${{ vars.NEXUS_HELM_HOST || vars.NEXUS_HOST }}" \
             --username "${{ secrets.NEXUS_USERNAME }}" \
             --password "${{ secrets.NEXUS_PASSWORD }}"
 
@@ -159,8 +159,8 @@ jobs:
             echo "|---|---|"
             echo "| App | ${{ inputs.app }} |"
             echo "| Mode | ${{ inputs.mode }} |"
-            echo "| Docker host | \`${{ vars.NEXUS_DOCKER_HOST }}\` |"
-            echo "| Helm host | \`${{ vars.NEXUS_HELM_HOST }}\` |"
+            echo "| Docker host | \`${{ vars.NEXUS_DOCKER_HOST || vars.NEXUS_HOST }}\` |"
+            echo "| Helm host | \`${{ vars.NEXUS_HELM_HOST || vars.NEXUS_HOST }}\` |"
             echo "| Docker registry | \`${{ vars.NEXUS_DOCKER_REGISTRY }}\` |"
             echo "| Helm registry | \`${{ vars.NEXUS_HELM_REGISTRY }}\` |"
           } >> "$GITHUB_STEP_SUMMARY"

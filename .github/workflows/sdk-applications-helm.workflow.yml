@@ -90,7 +90,7 @@ jobs:
       - name: Log in to Nexus Docker registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ vars.NEXUS_DOCKER_HOST }}
+          registry: ${{ vars.NEXUS_DOCKER_HOST || vars.NEXUS_HOST }}
           username: ${{ secrets.NEXUS_USERNAME }}
           password: ${{ secrets.NEXUS_PASSWORD }}
 
@@ -111,7 +111,7 @@ jobs:
       - name: Log in to Nexus Helm registry
         shell: bash
         run: |
-          helm registry login "${{ vars.NEXUS_HELM_HOST }}" \
+          helm registry login "${{ vars.NEXUS_HELM_HOST || vars.NEXUS_HOST }}" \
             --username "${{ secrets.NEXUS_USERNAME }}" \
             --password "${{ secrets.NEXUS_PASSWORD }}"
 

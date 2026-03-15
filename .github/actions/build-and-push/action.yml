@@ -23,12 +23,16 @@ runs:
       id: normalize
       shell: bash
       run: |
+        normalized_tags="$(
+          printf '%s\n' "${{ inputs.tags }}" \
+            | tr '[:upper:]' '[:lower:]' \
+            | sed '/^[[:space:]]*$/d'
+        )"
+
         {
-          echo 'tags<<EOF'
-          echo "${{ inputs.tags }}" | while IFS= read -r t; do
-            [ -n "$t" ] && echo "$(echo "$t" | tr '[:upper:]' '[:lower:]')"
-          done
-          echo 'EOF'
+          echo 'tags<<__TAGS__'
+          printf '%s\n' "$normalized_tags"
+          echo '__TAGS__'
         } >> "$GITHUB_OUTPUT"
 
     - name: Set up Docker Buildx
