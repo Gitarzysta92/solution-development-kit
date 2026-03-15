@@ -5,7 +5,7 @@ import {
   IdentityCreatedEvent,
   IdentityDeletedEvent,
   IdentityUpdatedEvent,
-} from '@apps/shared';
+} from '@sdk/features/identity/core';
 import { IQueueChannel } from '@sdk/platform/queue';
 
 export class RabbitMqIdentityEventsPublisher {

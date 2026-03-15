@@ -2,7 +2,7 @@ import { IDiscussionProjectionService } from '@domains/discussion';
 import {
   DISCUSSION_PROJECTION_QUEUE_NAME,
   DiscussionMaterializationRequestedEvent,
-} from '@apps/shared';
+} from '@sdk/features/discussion/core';
 import { IQueueChannel } from '@sdk/platform/queue';
 import { toRabbitMqPublishOptions } from '@sdk/kernel/aspects/events';
 import { randomUUID } from 'node:crypto';

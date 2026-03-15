@@ -10,6 +10,7 @@
   "include": ["**/*.ts"],
   "exclude": ["jest.config.ts", "**/*.spec.ts", "**/*.test.ts"],
   "references": [
+    { "path": "../../../kernel/aspects/events/tsconfig.lib.json" },
     { "path": "../../../kernel/standard/tsconfig.lib.json" },
     { "path": "../../../kernel/ontology/content/tsconfig.lib.json" },
     { "path": "../../../kernel/ontology/authority/tsconfig.lib.json" },

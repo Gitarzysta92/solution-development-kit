@@ -7,4 +7,5 @@ export * from './application/ports/discussion-projection-service.port';
 export * from './application/ports/discussion-identificator-generator.port';
 export * from './application/ports/discussion-payload-repository.port';
 export * from './application/models/comment-creation-context';
+export * from './contracts/discussion-projection.contract';
 

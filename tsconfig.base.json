@@ -34,8 +34,6 @@
     "isolatedModules": true,
     "types": [],
     "paths": {
-      "@apps/shared": ["apps/shared/src/index.ts"],
-
       "@domains/discussion": ["sdk/features/discussion/core/src/index.ts"],
       "@domains/identity/authentication": [
         "sdk/features/identity/libs/authentication/src/index.ts"

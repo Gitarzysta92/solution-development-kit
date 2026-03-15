@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { toRabbitMqPublishOptions } from '@sdk/kernel/aspects/events';
-import { IDENTITY_EVENTS_QUEUE_NAME, IdentityCreatedEvent } from '@apps/shared';
+import { IDENTITY_EVENTS_QUEUE_NAME, IdentityCreatedEvent } from '@sdk/features/identity/core';
 import { IQueueChannel } from '@sdk/platform/queue';
 
 export class RabbitMqIdentityEventsPublisher {

@@ -41,8 +41,22 @@ runs:
       shell: bash
       run: |
         pkg="$(ls -1 .helm-packages/*.tgz | head -n 1)"
+        repo_url="$(printf '%s' "${{ inputs.repository_url }}" | tr -d '\r' | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
+
+        if [ -z "$repo_url" ]; then
+          echo "repository_url input is empty."
+          exit 1
+        fi
+
+        if [[ ! "$repo_url" =~ ^https?:// ]]; then
+          repo_url="https://${repo_url}"
+        fi
+
+        upload_url="${repo_url%/}/"
+        echo "Uploading chart package to ${upload_url}"
+
         curl -fsS \
           --user "${{ inputs.username }}:${{ inputs.password }}" \
           --upload-file "$pkg" \
-          "${{ inputs.repository_url }}/"
+          "${upload_url}"
 

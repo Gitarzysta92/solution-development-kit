@@ -8,7 +8,7 @@ import { AccountManagementAppService } from './services/account-management-app.s
 import { IQueueChannel } from '@sdk/platform/queue';
 import { RabbitMqQueueClient } from '@sdk/extras/queue-rabbitmq';
 import { ConfigService } from '@nestjs/config';
-import { IDENTITY_EVENTS_QUEUE_NAME } from '@apps/shared';
+import { IDENTITY_EVENTS_QUEUE_NAME } from '@sdk/features/identity/core';
 import { PlatformMongoClient } from '@sdk/extras/mongo';
 import { MysqlClient, MysqlIdentitySubjectRepository } from '@sdk/extras/mysql';
 import { RabbitMqIdentityEventsPublisher } from './infrastructure/identity/rabbitmq-identity-events.publisher';

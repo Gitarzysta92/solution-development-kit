@@ -25,9 +25,6 @@
     },
     {
       "path": "../../../../../platform/queue/tsconfig.lib.json"
-    },
-    {
-      "path": "../../../../../../apps/shared/tsconfig.lib.json"
     }
   ]
 }

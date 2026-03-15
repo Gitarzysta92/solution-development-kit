@@ -7,7 +7,7 @@ import { MinioClient } from '../infrastructure/minio-client';
 import { IQueueChannel } from '@sdk/platform/queue';
 import { RabbitMqQueueClient } from '@sdk/extras/queue-rabbitmq';
 import { DISCUSSION_CONTENT_BUCKET_NAME } from './infrastructure/minio-discussion-payload.repository';
-import { DISCUSSION_PROJECTION_QUEUE_NAME } from '@apps/shared';
+import { DISCUSSION_PROJECTION_QUEUE_NAME } from '@sdk/features/discussion/core';
 import { ContentNodeEntity } from './infrastructure/content-node.entity';
 import { ContentNodeRelationEntity } from './infrastructure/content-node-relation.entity';
 import { CommentLikeEntity } from './infrastructure/comment-like.entity';

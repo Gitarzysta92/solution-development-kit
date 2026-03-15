@@ -5,7 +5,7 @@ import { MysqlClient } from '@sdk/extras/mysql';
 import {
   DISCUSSION_PROJECTION_QUEUE_NAME,
   DiscussionMaterializationRequestedEvent,
-} from '@apps/shared';
+} from '@sdk/features/discussion/core';
 import { isEventEnvelope } from '@sdk/kernel/aspects/events';
 import { MinioClient } from '@sdk/extras/minio';
 import { loadDiscussionPayload } from './minio-payload';

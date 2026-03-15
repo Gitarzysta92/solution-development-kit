@@ -16,4 +16,3 @@ export type IdentityDeletedEvent = EventEnvelope<
   'identity.deleted',
   { identityId: string; subjectId?: string; provider?: 'firebase' }
 >;
-

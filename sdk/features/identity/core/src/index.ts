@@ -1,2 +1,2 @@
 export * from './identity';
-export * from './events/identity-created.event';
+export * from './contracts/identity-events.contract';
