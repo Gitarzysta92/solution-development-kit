@@ -3,7 +3,7 @@ const { join } = require('path');
 
 module.exports = {
   output: {
-    path: join(__dirname, '../../../../../dist/sdk/features/discussion/applications/materializer'),
+    path: join(__dirname, '../../../../../../dist/sdk/features/discussion/applications/materializer'),
   },
   plugins: [
     new NxAppWebpackPlugin({
