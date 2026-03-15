@@ -1,0 +1,9 @@
+apiVersion: platform.threesixty.dev/v1alpha1
+kind: TunnelIngressRoute
+metadata:
+  name: 00-sdk-images-nexus
+  namespace: cloudflared
+spec:
+  hostname: solution-development-kit-images.nexus.dev.threesixty.dev
+  service: http://ingress-nginx-controller.ingress-nginx.svc.cluster.local:80
+  originRequestHttpHostHeader: solution-development-kit-images.nexus.dev.threesixty.dev
