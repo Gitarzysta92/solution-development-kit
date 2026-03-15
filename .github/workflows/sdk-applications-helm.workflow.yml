@@ -11,7 +11,7 @@ on:
   workflow_dispatch: {}
 
 jobs:
-  # Requires repo-level variables NEXUS_DOCKER_HOST, NEXUS_HELM_HOST, NEXUS_DOCKER_REGISTRY, NEXUS_HELM_REGISTRY and secrets NEXUS_USERNAME, NEXUS_PASSWORD. See .github/SECRETS.md.
+  # Requires repo-level variables NEXUS_DOCKER_HOST, NEXUS_DOCKER_REGISTRY, NEXUS_HELM_REPOSITORY_URL and secrets NEXUS_USERNAME, NEXUS_PASSWORD. See .github/SECRETS.md.
   # Uses ARC runner scale set (solution-development-kit) for image build/push.
   build_publish:
     name: Build & publish (${{ matrix.app }})
@@ -90,7 +90,7 @@ jobs:
       - name: Log in to Nexus Docker registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ vars.NEXUS_DOCKER_HOST || vars.NEXUS_HOST }}
+          registry: ${{ vars.NEXUS_DOCKER_HOST }}
           username: ${{ secrets.NEXUS_USERNAME }}
           password: ${{ secrets.NEXUS_PASSWORD }}
 
@@ -108,19 +108,34 @@ jobs:
         with:
           version: v3.15.4
 
-      - name: Log in to Nexus Helm registry
+      - name: Preflight Helm chart repository endpoint
         shell: bash
         run: |
-          helm registry login "${{ vars.NEXUS_HELM_HOST || vars.NEXUS_HOST }}" \
-            --username "${{ secrets.NEXUS_USERNAME }}" \
-            --password "${{ secrets.NEXUS_PASSWORD }}"
+          set -euo pipefail
+
+          REPO_INDEX_URL="${NEXUS_HELM_REPOSITORY_URL%/}/index.yaml"
+          echo "Checking Helm repository index ${REPO_INDEX_URL} ..."
+          STATUS="$(curl -ksS -o /dev/null -w "%{http_code}" "${REPO_INDEX_URL}" || true)"
+          echo "HTTP status: ${STATUS}"
+
+          if [ "${STATUS}" = "000" ]; then
+            echo "Warning: Helm repository preflight returned HTTP 000; continuing to upload validation."
+          elif [ "${STATUS}" != "200" ] && [ "${STATUS}" != "401" ]; then
+            echo "Expected Helm repository index to return 200/401, got ${STATUS}."
+            echo "NEXUS_HELM_REPOSITORY_URL likely points to an invalid or inaccessible chart repository."
+            exit 1
+          fi
+        env:
+          NEXUS_HELM_REPOSITORY_URL: ${{ vars.NEXUS_HELM_REPOSITORY_URL }}
 
       - name: Publish Helm chart to Nexus
         id: publish
         uses: ./.github/actions/publish-helm-chart
         with:
           chart_path: ${{ matrix.chart }}
-          registry: ${{ vars.NEXUS_HELM_REGISTRY }}
+          repository_url: ${{ vars.NEXUS_HELM_REPOSITORY_URL }}
+          username: ${{ secrets.NEXUS_USERNAME }}
+          password: ${{ secrets.NEXUS_PASSWORD }}
           version: 0.1.${{ github.run_number }}
           app_version: ${{ github.sha }}
 
@@ -133,5 +148,5 @@ jobs:
           echo "| Chart version | 0.1.${{ github.run_number }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| App version | ${{ github.sha }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Image registry | \`${{ vars.NEXUS_DOCKER_REGISTRY }}\` |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Chart registry | \`${{ vars.NEXUS_HELM_REGISTRY }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Chart repository | \`${{ vars.NEXUS_HELM_REPOSITORY_URL }}\` |" >> "$GITHUB_STEP_SUMMARY"
 

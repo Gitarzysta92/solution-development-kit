@@ -1,12 +1,18 @@
 name: publish-helm-chart
-description: Package and push a Helm chart to an OCI registry
+description: Package and upload a Helm chart to Nexus
 
 inputs:
   chart_path:
     description: Path to chart directory
     required: true
-  registry:
-    description: OCI registry URL (e.g. oci://ghcr.io/OWNER/charts)
+  repository_url:
+    description: Nexus Helm repository URL (e.g. https://nexus/repository/solution-development-kit-charts/)
+    required: true
+  username:
+    description: Nexus username
+    required: true
+  password:
+    description: Nexus password or token
     required: true
   version:
     description: Chart version
@@ -31,9 +37,12 @@ runs:
           --app-version "${{ inputs.app_version }}" \
           --destination .helm-packages
 
-    - name: Push chart (OCI)
+    - name: Upload chart package
       shell: bash
       run: |
         pkg="$(ls -1 .helm-packages/*.tgz | head -n 1)"
-        helm push "$pkg" "${{ inputs.registry }}"
+        curl -fsS \
+          --user "${{ inputs.username }}:${{ inputs.password }}" \
+          --upload-file "$pkg" \
+          "${{ inputs.repository_url }}/"
 

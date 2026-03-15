@@ -106,12 +106,25 @@ jobs:
         with:
           version: v3.15.4
 
-      - name: Log in to Nexus Helm registry
+      - name: Preflight Helm chart repository endpoint
         shell: bash
         run: |
-          helm registry login "${{ vars.NEXUS_HELM_HOST || vars.NEXUS_HOST }}" \
-            --username "${{ secrets.NEXUS_USERNAME }}" \
-            --password "${{ secrets.NEXUS_PASSWORD }}"
+          set -euo pipefail
+
+          REPO_INDEX_URL="${NEXUS_HELM_REPOSITORY_URL%/}/index.yaml"
+          echo "Checking Helm repository index ${REPO_INDEX_URL} ..."
+          STATUS="$(curl -ksS -o /dev/null -w "%{http_code}" "${REPO_INDEX_URL}" || true)"
+          echo "HTTP status: ${STATUS}"
+
+          if [ "${STATUS}" = "000" ]; then
+            echo "Warning: Helm repository preflight returned HTTP 000; continuing."
+          elif [ "${STATUS}" != "200" ] && [ "${STATUS}" != "401" ]; then
+            echo "Expected Helm repository index to return 200/401, got ${STATUS}."
+            echo "NEXUS_HELM_REPOSITORY_URL likely points to an invalid or inaccessible chart repository."
+            exit 1
+          fi
+        env:
+          NEXUS_HELM_REPOSITORY_URL: ${{ vars.NEXUS_HELM_REPOSITORY_URL }}
 
       - name: Set up Node.js
         if: ${{ inputs.mode != 'connectivity' }}
@@ -160,7 +173,6 @@ jobs:
             echo "| App | ${{ inputs.app }} |"
             echo "| Mode | ${{ inputs.mode }} |"
             echo "| Docker host | \`${{ vars.NEXUS_DOCKER_HOST || vars.NEXUS_HOST }}\` |"
-            echo "| Helm host | \`${{ vars.NEXUS_HELM_HOST || vars.NEXUS_HOST }}\` |"
             echo "| Docker registry | \`${{ vars.NEXUS_DOCKER_REGISTRY }}\` |"
-            echo "| Helm registry | \`${{ vars.NEXUS_HELM_REGISTRY }}\` |"
+            echo "| Helm repository URL | \`${{ vars.NEXUS_HELM_REPOSITORY_URL }}\` |"
           } >> "$GITHUB_STEP_SUMMARY"
