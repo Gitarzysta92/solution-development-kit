@@ -15,7 +15,7 @@ export function resolveAuthBffUrl(): string {
     return 'http://localhost:8080';
   }
 
-  return window.location.origin;
+  return `${window.location.origin}/api`;
 }
 
 export function resolveCookieDomain(): string | null {
