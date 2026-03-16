@@ -1,0 +1,83 @@
+{
+  "name": "sdk-features-identity-applications-login-portal",
+  "$schema": "../../../../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "prefix": "app",
+  "sourceRoot": "sdk/features/identity/applications/login-portal/application/src",
+  "tags": ["type:app", "scope:identity"],
+  "targets": {
+    "build": {
+      "executor": "@angular-devkit/build-angular:application",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/sdk/features/identity/applications/login-portal/application",
+        "index": "sdk/features/identity/applications/login-portal/application/src/index.html",
+        "browser": "sdk/features/identity/applications/login-portal/application/src/main.ts",
+        "polyfills": ["zone.js"],
+        "tsConfig": "sdk/features/identity/applications/login-portal/application/tsconfig.app.json",
+        "inlineStyleLanguage": "scss",
+        "assets": [
+          {
+            "glob": "**/*",
+            "input": "sdk/features/identity/applications/login-portal/application/public"
+          }
+        ],
+        "styles": [
+          "sdk/features/identity/applications/login-portal/application/src/styles.scss"
+        ],
+        "scripts": []
+      },
+      "configurations": {
+        "production": {
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "500kb",
+              "maximumError": "1mb"
+            },
+            {
+              "type": "anyComponentStyle",
+              "maximumWarning": "4kb",
+              "maximumError": "8kb"
+            }
+          ],
+          "outputHashing": "all"
+        },
+        "development": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve": {
+      "executor": "@angular-devkit/build-angular:dev-server",
+      "configurations": {
+        "production": {
+          "buildTarget": "sdk-features-identity-applications-login-portal:build:production"
+        },
+        "development": {
+          "buildTarget": "sdk-features-identity-applications-login-portal:build:development"
+        }
+      },
+      "defaultConfiguration": "development"
+    },
+    "extract-i18n": {
+      "executor": "@angular-devkit/build-angular:extract-i18n",
+      "options": {
+        "buildTarget": "sdk-features-identity-applications-login-portal:build"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "sdk/features/identity/applications/login-portal/application/jest.config.ts"
+      }
+    }
+  }
+}

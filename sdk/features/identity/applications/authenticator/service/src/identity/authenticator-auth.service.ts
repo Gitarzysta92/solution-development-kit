@@ -19,6 +19,52 @@ function getBearerToken(authorization: string | undefined): string | null {
   return parts[1] || null;
 }
 
+function parseCookieHeader(cookieHeader: string | undefined): Map<string, string> {
+  const result = new Map<string, string>();
+  if (!cookieHeader || typeof cookieHeader !== 'string') {
+    return result;
+  }
+
+  for (const part of cookieHeader.split(';')) {
+    const [rawName, ...rawValueParts] = part.split('=');
+    if (!rawName || rawValueParts.length === 0) continue;
+    const name = rawName.trim();
+    const rawValue = rawValueParts.join('=').trim();
+    if (!name || !rawValue) continue;
+
+    try {
+      result.set(name, decodeURIComponent(rawValue));
+    } catch {
+      result.set(name, rawValue);
+    }
+  }
+
+  return result;
+}
+
+function getTokenFromCookie(cookieHeader: string | undefined, cookieNames: string[]): string | null {
+  const cookies = parseCookieHeader(cookieHeader);
+  for (const name of cookieNames) {
+    const token = cookies.get(name);
+    if (token) {
+      return token;
+    }
+  }
+  return null;
+}
+
+function resolveToken(
+  authorization: string | undefined,
+  cookieHeader: string | undefined,
+  cookieNames: string[]
+): string | null {
+  const bearerToken = getBearerToken(authorization);
+  if (bearerToken) {
+    return bearerToken;
+  }
+  return getTokenFromCookie(cookieHeader, cookieNames);
+}
+
 export class AuthenticatorAuthService {
   private readonly authService: IdentityAuthenticationService;
 
@@ -43,16 +89,24 @@ export class AuthenticatorAuthService {
     return this.authService.refresh(refreshToken);
   }
 
-  async validateRequired(authorization: string | undefined): Promise<Result<ValidateRequiredResult, Error>> {
-    const token = getBearerToken(authorization);
+  async validateRequired(
+    authorization: string | undefined,
+    cookieHeader: string | undefined,
+    cookieNames: string[]
+  ): Promise<Result<ValidateRequiredResult, Error>> {
+    const token = resolveToken(authorization, cookieHeader, cookieNames);
     if (!token) {
-      return err(new Error('Missing or invalid Authorization header'));
+      return err(new Error('Missing bearer token or auth cookie'));
     }
     return this.idTokenVerifier.verifyIdToken(token);
   }
 
-  async validateOptional(authorization: string | undefined): Promise<Result<ValidateOptionalResult, Error>> {
-    const token = getBearerToken(authorization);
+  async validateOptional(
+    authorization: string | undefined,
+    cookieHeader: string | undefined,
+    cookieNames: string[]
+  ): Promise<Result<ValidateOptionalResult, Error>> {
+    const token = resolveToken(authorization, cookieHeader, cookieNames);
     if (!token) {
       return ok({ authenticated: false, anonymous: true });
     }

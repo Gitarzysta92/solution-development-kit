@@ -1,0 +1,44 @@
+replicaCount: 1
+
+image:
+  repository: solution-development-kit-images.nexus.dev.threesixty.dev/features/identity/login-portal
+  pullPolicy: Always
+  tag: latest
+
+imagePullSecrets:
+  - name: nexus-pull-secret
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 80
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+  hosts:
+    - host: login-portal.host.placeholder
+      paths:
+        - path: /
+          pathType: Prefix
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+
+probes:
+  path: /health
+  port: 80
+  liveness:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+  readiness:
+    initialDelaySeconds: 5
+    periodSeconds: 5

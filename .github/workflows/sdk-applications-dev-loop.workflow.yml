@@ -11,6 +11,7 @@ on:
         options:
           - authenticator
           - account-management
+          - login-portal
           - discussion
           - discussion-materializer
       mode:
@@ -63,6 +64,12 @@ jobs:
               echo "nx_project=sdk-features-identity-applications-management" >> "$GITHUB_OUTPUT"
               echo "dist_context=dist/sdk/features/identity/applications/management" >> "$GITHUB_OUTPUT"
               echo "dockerfile=sdk/features/identity/applications/management/service/Dockerfile" >> "$GITHUB_OUTPUT"
+              ;;
+            login-portal)
+              echo "image_path=features/identity/login-portal" >> "$GITHUB_OUTPUT"
+              echo "nx_project=sdk-features-identity-applications-login-portal" >> "$GITHUB_OUTPUT"
+              echo "dist_context=dist/sdk/features/identity/applications/login-portal/application/browser" >> "$GITHUB_OUTPUT"
+              echo "dockerfile=sdk/features/identity/applications/login-portal/application/Dockerfile" >> "$GITHUB_OUTPUT"
               ;;
             *)
               echo "Unsupported app: ${{ inputs.app }}"

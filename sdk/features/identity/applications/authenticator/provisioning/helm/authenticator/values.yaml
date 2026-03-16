@@ -59,6 +59,8 @@ env:
         name: ingress-auth-secret
         key: secret
         optional: true
+  - name: AUTH_COOKIE_NAMES
+    value: "auth_token"
   - name: GOOGLE_APPLICATION_CREDENTIALS
     value: "/var/secrets/firebase/serviceAccount.json"
 
