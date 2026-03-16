@@ -24,17 +24,13 @@ export function resolveCookieDomain(): string | null {
   const host = window.location.hostname;
   if (host === 'localhost' || host === '127.0.0.1') return null;
 
-  if (host.endsWith('.threesixty.dev')) {
-    const parts = host.split('.');
-    if (parts.length >= 4) {
-      return `.${parts.slice(1).join('.')}`;
-    }
+  const parts = host.split('.');
+  // Domain-agnostic: share cookie across subdomains by dropping
+  // only the left-most label (e.g. login.dev.example.com -> .dev.example.com).
+  if (parts.length >= 3) {
+    return `.${parts.slice(1).join('.')}`;
   }
 
-  const parts = host.split('.');
-  if (parts.length >= 2) {
-    return `.${parts.slice(-2).join('.')}`;
-  }
   return null;
 }
 
