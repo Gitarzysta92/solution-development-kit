@@ -27,7 +27,7 @@ export class IdentityEntity {
   @Column({ name: 'provider_type', length: 64 })
   providerType!: string;
 
-  @Column({ name: 'provider_secret', nullable: true })
+  @Column({ name: 'provider_secret', type: 'text', nullable: true })
   providerSecret!: string | null;
 
   @Column({ name: 'created_at', type: 'bigint' })
