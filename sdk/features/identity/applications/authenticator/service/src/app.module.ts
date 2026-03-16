@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import * as admin from 'firebase-admin';
+import { readFileSync } from 'node:fs';
 
 import {
   FirebaseAdminIdTokenVerifier,
@@ -13,6 +15,7 @@ import {
 import {
   ANONYMOUS_AUTHENTICATION_STRATEGY_FACTORY,
   EMAIL_AUTHENTICATION_STRATEGY_FACTORY,
+  FIREBASE_ADMIN_APP,
   GITHUB_AUTHENTICATION_STRATEGY_FACTORY,
   GITHUB_CODE_EXCHANGER,
   GOOGLE_AUTHENTICATION_STRATEGY_FACTORY,
@@ -40,6 +43,29 @@ import { GithubAuthenticationStrategyFactory } from './strategy/github-strategy.
 import { GoogleAuthenticationStrategyFactory } from './strategy/google-strategy.factory';
 import { AuthenticatorAuthService } from './identity/authenticator-auth.service';
 import { MysqlIdentityProvider } from './services/mysql-identity-provider';
+
+function initializeFirebaseAdmin(config: ConfigService): admin.app.App {
+  const existingApp = admin.apps[0];
+  if (existingApp) {
+    return existingApp;
+  }
+
+  const projectId = config.get<string>('FIREBASE_PROJECT_ID');
+  const credentialsPath = config.get<string>('GOOGLE_APPLICATION_CREDENTIALS');
+
+  if (credentialsPath) {
+    const serviceAccount = JSON.parse(readFileSync(credentialsPath, 'utf8')) as admin.ServiceAccount;
+    return admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+      ...(projectId ? { projectId } : {}),
+    });
+  }
+
+  return admin.initializeApp({
+    credential: admin.credential.applicationDefault(),
+    ...(projectId ? { projectId } : {}),
+  });
+}
 
 @Module({
   imports: [
@@ -76,7 +102,16 @@ import { MysqlIdentityProvider } from './services/mysql-identity-provider';
       provide: SWAGGER_DOCUMENT,
       useValue: swaggerDocument,
     },
-    FirebaseAdminIdTokenVerifier,
+    {
+      provide: FIREBASE_ADMIN_APP,
+      useFactory: (config: ConfigService) => initializeFirebaseAdmin(config),
+      inject: [ConfigService],
+    },
+    {
+      provide: FirebaseAdminIdTokenVerifier,
+      useFactory: () => new FirebaseAdminIdTokenVerifier(),
+      inject: [FIREBASE_ADMIN_APP],
+    },
     {
       provide: REST_SESSION_GATEWAY,
       useFactory: (config: ConfigService) =>
