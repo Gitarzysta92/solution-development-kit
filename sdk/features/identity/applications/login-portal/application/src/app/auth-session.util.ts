@@ -15,16 +15,7 @@ export function resolveAuthBffUrl(): string {
     return 'http://localhost:8080';
   }
 
-  if (host.endsWith('.threesixty.dev')) {
-    const parts = host.split('.');
-    if (parts.length >= 4) {
-      const env = parts[1];
-      return `https://auth.${env}.threesixty.dev`;
-    }
-    return 'https://auth.dev.threesixty.dev';
-  }
-
-  return `${window.location.protocol}//auth.${host}`;
+  return window.location.origin;
 }
 
 export function resolveCookieDomain(): string | null {
