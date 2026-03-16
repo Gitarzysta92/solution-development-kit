@@ -6,14 +6,30 @@ import { AuthenticatorAuthService } from '../identity/authenticator-auth.service
 
 @Controller()
 export class ValidationController {
+  private readonly authCookieNames: string[];
+
   constructor(
     @Inject(IDENTITY_AUTH_SERVICE) private readonly identificationService: AuthenticatorAuthService,
     private readonly config: ConfigService
-  ) {}
+  ) {
+    const configuredCookieNames = this.config.get<string>('AUTH_COOKIE_NAMES') ?? 'auth_token';
+    this.authCookieNames = configuredCookieNames
+      .split(',')
+      .map((name) => name.trim())
+      .filter((name) => name.length > 0);
+  }
 
   @Get('/validate')
-  async validateRequired(@Headers('authorization') authorization: string | undefined, @Res() res: Response) {
-    const result = await this.identificationService.validateRequired(authorization);
+  async validateRequired(
+    @Headers('authorization') authorization: string | undefined,
+    @Headers('cookie') cookieHeader: string | undefined,
+    @Res() res: Response
+  ) {
+    const result = await this.identificationService.validateRequired(
+      authorization,
+      cookieHeader,
+      this.authCookieNames
+    );
     if (!result.ok) {
       // eslint-disable-next-line no-console
       console.error('❌ Token validation failed:', result.error.message);
@@ -59,8 +75,16 @@ export class ValidationController {
   }
 
   @Get('/validate-optional')
-  async validateOptional(@Headers('authorization') authorization: string | undefined, @Res() res: Response) {
-    const result = await this.identificationService.validateOptional(authorization);
+  async validateOptional(
+    @Headers('authorization') authorization: string | undefined,
+    @Headers('cookie') cookieHeader: string | undefined,
+    @Res() res: Response
+  ) {
+    const result = await this.identificationService.validateOptional(
+      authorization,
+      cookieHeader,
+      this.authCookieNames
+    );
 
     if (!result.ok || result.value.authenticated !== true) {
       res.setHeader('X-Anonymous', 'true');

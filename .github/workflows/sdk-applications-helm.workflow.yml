@@ -11,10 +11,93 @@ on:
   workflow_dispatch: {}
 
 jobs:
+  detect_changes:
+    name: Detect changed apps
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      changed_apps_json: ${{ steps.compute.outputs.changed_apps_json }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect paths
+        id: changes
+        if: ${{ github.event_name != 'workflow_dispatch' }}
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            discussion:
+              - 'sdk/features/discussion/applications/management/**'
+            discussion_materializer:
+              - 'sdk/features/discussion/applications/materializer/**'
+            authenticator:
+              - 'sdk/features/identity/applications/authenticator/**'
+            account_management:
+              - 'sdk/features/identity/applications/management/**'
+            login_portal:
+              - 'sdk/features/identity/applications/login-portal/**'
+            shared:
+              - 'sdk/kernel/**'
+              - 'sdk/features/**/libs/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'nx.json'
+              - 'tsconfig.base.json'
+              - '.github/actions/**'
+              - '.github/workflows/sdk-applications-helm.workflow.yml'
+
+      - name: Compute changed app matrix
+        id: compute
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          ALL_APPS='["discussion","discussion-materializer","authenticator","account-management","login-portal"]'
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "changed_apps_json=${ALL_APPS}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          SHARED_CHANGED="${{ steps.changes.outputs.shared }}"
+          if [ "${SHARED_CHANGED}" = "true" ]; then
+            echo "changed_apps_json=${ALL_APPS}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          CHANGED_APPS_JSON="["
+          SEP=""
+
+          if [ "${{ steps.changes.outputs.discussion }}" = "true" ]; then
+            CHANGED_APPS_JSON="${CHANGED_APPS_JSON}${SEP}\"discussion\""
+            SEP=","
+          fi
+          if [ "${{ steps.changes.outputs.discussion_materializer }}" = "true" ]; then
+            CHANGED_APPS_JSON="${CHANGED_APPS_JSON}${SEP}\"discussion-materializer\""
+            SEP=","
+          fi
+          if [ "${{ steps.changes.outputs.authenticator }}" = "true" ]; then
+            CHANGED_APPS_JSON="${CHANGED_APPS_JSON}${SEP}\"authenticator\""
+            SEP=","
+          fi
+          if [ "${{ steps.changes.outputs.account_management }}" = "true" ]; then
+            CHANGED_APPS_JSON="${CHANGED_APPS_JSON}${SEP}\"account-management\""
+            SEP=","
+          fi
+          if [ "${{ steps.changes.outputs.login_portal }}" = "true" ]; then
+            CHANGED_APPS_JSON="${CHANGED_APPS_JSON}${SEP}\"login-portal\""
+          fi
+
+          CHANGED_APPS_JSON="${CHANGED_APPS_JSON}]"
+          echo "changed_apps_json=${CHANGED_APPS_JSON}" >> "$GITHUB_OUTPUT"
+
   # Requires repo-level variables NEXUS_DOCKER_HOST, NEXUS_DOCKER_REGISTRY, NEXUS_HELM_REPOSITORY_URL and secrets NEXUS_USERNAME, NEXUS_PASSWORD. See .github/SECRETS.md.
   # Uses ARC runner scale set (solution-development-kit) for image build/push.
   build_publish:
     name: Build & publish (${{ matrix.app }})
+    needs: detect_changes
     runs-on: arc-runner-set-solution-development-kit
     permissions:
       contents: read
@@ -22,42 +105,59 @@ jobs:
       fail-fast: false
       max-parallel: 2
       matrix:
-        include:
-          - app: discussion
-            image_path: features/discussion/management
-            nx_project: sdk-features-discussion-applications-management
-            dist_context: dist/sdk/features/discussion/applications/management
-            dockerfile: sdk/features/discussion/applications/management/service/Dockerfile
-            image: solution-development-kit/discussion
-            chart: sdk/features/discussion/applications/management/provisioning/helm/discussion
-
-          - app: discussion-materializer
-            image_path: features/discussion/discussion-materializer
-            nx_project: sdk-features-discussion-applications-materializer
-            dist_context: dist/sdk/features/discussion/applications/materializer
-            dockerfile: sdk/features/discussion/applications/materializer/service/Dockerfile
-            image: solution-development-kit/discussion-materializer
-            chart: sdk/features/discussion/applications/materializer/provisioning/helm/discussion-materializer
-
-          - app: authenticator
-            image_path: features/identity/authenticator
-            nx_project: sdk-features-identity-applications-authenticator
-            dist_context: dist/sdk/features/identity/applications/authenticator
-            dockerfile: sdk/features/identity/applications/authenticator/service/Dockerfile
-            image: solution-development-kit/authenticator
-            chart: sdk/features/identity/applications/authenticator/provisioning/helm/authenticator
-
-          - app: account-management
-            image_path: features/identity/account-management
-            nx_project: sdk-features-identity-applications-management
-            dist_context: dist/sdk/features/identity/applications/management
-            dockerfile: sdk/features/identity/applications/management/service/Dockerfile
-            image: solution-development-kit/account-management
-            chart: sdk/features/identity/applications/management/provisioning/helm/account-management
+        app: ${{ fromJson(needs.detect_changes.outputs.changed_apps_json) }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Resolve application configuration
+        id: cfg
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          case "${{ matrix.app }}" in
+            discussion)
+              echo "image_path=features/discussion/management" >> "$GITHUB_OUTPUT"
+              echo "nx_project=sdk-features-discussion-applications-management" >> "$GITHUB_OUTPUT"
+              echo "dist_context=dist/sdk/features/discussion/applications/management" >> "$GITHUB_OUTPUT"
+              echo "dockerfile=sdk/features/discussion/applications/management/service/Dockerfile" >> "$GITHUB_OUTPUT"
+              echo "chart=sdk/features/discussion/applications/management/provisioning/helm/discussion" >> "$GITHUB_OUTPUT"
+              ;;
+            discussion-materializer)
+              echo "image_path=features/discussion/discussion-materializer" >> "$GITHUB_OUTPUT"
+              echo "nx_project=sdk-features-discussion-applications-materializer" >> "$GITHUB_OUTPUT"
+              echo "dist_context=dist/sdk/features/discussion/applications/materializer" >> "$GITHUB_OUTPUT"
+              echo "dockerfile=sdk/features/discussion/applications/materializer/service/Dockerfile" >> "$GITHUB_OUTPUT"
+              echo "chart=sdk/features/discussion/applications/materializer/provisioning/helm/discussion-materializer" >> "$GITHUB_OUTPUT"
+              ;;
+            authenticator)
+              echo "image_path=features/identity/authenticator" >> "$GITHUB_OUTPUT"
+              echo "nx_project=sdk-features-identity-applications-authenticator" >> "$GITHUB_OUTPUT"
+              echo "dist_context=dist/sdk/features/identity/applications/authenticator" >> "$GITHUB_OUTPUT"
+              echo "dockerfile=sdk/features/identity/applications/authenticator/service/Dockerfile" >> "$GITHUB_OUTPUT"
+              echo "chart=sdk/features/identity/applications/authenticator/provisioning/helm/authenticator" >> "$GITHUB_OUTPUT"
+              ;;
+            account-management)
+              echo "image_path=features/identity/account-management" >> "$GITHUB_OUTPUT"
+              echo "nx_project=sdk-features-identity-applications-management" >> "$GITHUB_OUTPUT"
+              echo "dist_context=dist/sdk/features/identity/applications/management" >> "$GITHUB_OUTPUT"
+              echo "dockerfile=sdk/features/identity/applications/management/service/Dockerfile" >> "$GITHUB_OUTPUT"
+              echo "chart=sdk/features/identity/applications/management/provisioning/helm/account-management" >> "$GITHUB_OUTPUT"
+              ;;
+            login-portal)
+              echo "image_path=features/identity/login-portal" >> "$GITHUB_OUTPUT"
+              echo "nx_project=sdk-features-identity-applications-login-portal" >> "$GITHUB_OUTPUT"
+              echo "dist_context=dist/sdk/features/identity/applications/login-portal/application/browser" >> "$GITHUB_OUTPUT"
+              echo "dockerfile=sdk/features/identity/applications/login-portal/application/Dockerfile" >> "$GITHUB_OUTPUT"
+              echo "chart=sdk/features/identity/applications/login-portal/provisioning/helm/login-portal" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "Unsupported app: ${{ matrix.app }}"
+              exit 1
+              ;;
+          esac
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -71,13 +171,13 @@ jobs:
         run: npm ci --prefer-offline --no-audit --progress=false
 
       - name: Build application
-        run: npx nx build ${{ matrix.nx_project }} --configuration=production
+        run: npx nx build ${{ steps.cfg.outputs.nx_project }} --configuration=production
 
       - name: Compute image tags (Nexus)
         id: tags
         shell: bash
         run: |
-          IMAGE="${{ vars.NEXUS_DOCKER_REGISTRY }}/${{ matrix.image_path }}"
+          IMAGE="${{ vars.NEXUS_DOCKER_REGISTRY }}/${{ steps.cfg.outputs.image_path }}"
           IMAGE="$(echo "$IMAGE" | tr '[:upper:]' '[:lower:]')"
           echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
           echo "sha_tag=$IMAGE:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
@@ -97,8 +197,8 @@ jobs:
       - name: Build & push image
         uses: ./.github/actions/build-and-push
         with:
-          context: ${{ matrix.dist_context }}
-          dockerfile: ${{ matrix.dockerfile }}
+          context: ${{ steps.cfg.outputs.dist_context }}
+          dockerfile: ${{ steps.cfg.outputs.dockerfile }}
           tags: |
             ${{ steps.tags.outputs.sha_tag }}
             ${{ steps.tags.outputs.extra_tag }}
@@ -137,7 +237,7 @@ jobs:
         id: publish
         uses: ./.github/actions/publish-helm-chart
         with:
-          chart_path: ${{ matrix.chart }}
+          chart_path: ${{ steps.cfg.outputs.chart }}
           repository_url: ${{ vars.NEXUS_HELM_REPOSITORY_URL }}
           username: ${{ secrets.NEXUS_USERNAME }}
           password: ${{ secrets.NEXUS_PASSWORD }}

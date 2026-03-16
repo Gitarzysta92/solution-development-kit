@@ -58,8 +58,8 @@ This service provides two main functions:
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/validate` | GET | Validates Firebase JWT token. Returns 401 if invalid. |
-| `/validate-optional` | GET | Validates token if present, allows anonymous access otherwise. |
+| `/validate` | GET | Validates token from `Authorization: Bearer` or configured auth cookie. Returns 401 if invalid. |
+| `/validate-optional` | GET | Validates token from bearer/cookie if present, allows anonymous access otherwise. |
 
 **Headers added on successful validation:**
 - `X-User-Id`: Firebase user ID
@@ -90,6 +90,7 @@ This service provides two main functions:
 | `FIREBASE_PROJECT_ID` | Yes | - | Firebase project ID |
 | `FIREBASE_WEB_API_KEY` | Yes* | - | Firebase Web API Key (for auth BFF) |
 | `INGRESS_AUTH_SECRET` | No | - | Shared secret for backend validation |
+| `AUTH_COOKIE_NAMES` | No | `auth_token` | Comma-separated cookie names used for ingress auth validation |
 | `ALLOWED_ORIGINS` | No | - | Comma-separated CORS origins |
 | `ENABLE_EMAIL_PASSWORD` | No | true | Enable email/password auth |
 | `ENABLE_GOOGLE` | No | false | Enable Google OAuth |
@@ -258,6 +259,9 @@ curl -X POST http://localhost:8080/auth/signin \
 # Validate token
 TOKEN="your-firebase-id-token"
 curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/validate
+
+# Validate token from cookie (default cookie name: auth_token)
+curl -H "Cookie: auth_token=$TOKEN" http://localhost:8080/validate
 ```
 
 ## Security Considerations
