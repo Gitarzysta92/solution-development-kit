@@ -69,7 +69,7 @@ export class OAuthCallbackComponent implements OnInit {
     try {
       const session = await firstValueFrom(
         this.http.post<AuthSession>(`${this.authBffUrl}/auth/signin/oauth`, {
-          provider: 'google',
+          provider: 'google-v2',
           code,
           redirectUri,
           codeVerifier,

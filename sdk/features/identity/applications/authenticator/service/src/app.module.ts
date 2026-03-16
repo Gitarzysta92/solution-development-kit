@@ -19,6 +19,7 @@ import {
   GITHUB_AUTHENTICATION_STRATEGY_FACTORY,
   GITHUB_CODE_EXCHANGER,
   GOOGLE_AUTHENTICATION_STRATEGY_FACTORY,
+  GOOGLE_V2_AUTHENTICATION_STRATEGY_FACTORY,
   GOOGLE_CODE_EXCHANGER,
   IDENTITY_AUTH_SERVICE,
   REST_SESSION_GATEWAY,
@@ -41,6 +42,7 @@ import { AnonymousAuthenticationStrategyFactory } from './strategy/anonymous-str
 import { EmailAuthenticationStrategyFactory } from './strategy/email-strategy.factory';
 import { GithubAuthenticationStrategyFactory } from './strategy/github-strategy.factory';
 import { GoogleAuthenticationStrategyFactory } from './strategy/google-strategy.factory';
+import { GoogleV2AuthenticationStrategyFactory } from './strategy/google-v2-strategy.factory';
 import { AuthenticatorAuthService } from './identity/authenticator-auth.service';
 import { MysqlIdentityProvider } from './services/mysql-identity-provider';
 
@@ -179,6 +181,15 @@ function initializeFirebaseAdmin(config: ConfigService): admin.app.App {
           restGateway
         ),
       inject: [GOOGLE_CODE_EXCHANGER, USER_PROVISIONER, TOKEN_GENERATOR, REST_SESSION_GATEWAY],
+    },
+    {
+      provide: GOOGLE_V2_AUTHENTICATION_STRATEGY_FACTORY,
+      useFactory: (
+        googleExchanger: FirebaseGoogleCodeExchanger,
+        restGateway: FirebaseRestSessionGateway
+      ) =>
+        new GoogleV2AuthenticationStrategyFactory(googleExchanger, restGateway),
+      inject: [GOOGLE_CODE_EXCHANGER, REST_SESSION_GATEWAY],
     },
     {
       provide: GITHUB_AUTHENTICATION_STRATEGY_FACTORY,

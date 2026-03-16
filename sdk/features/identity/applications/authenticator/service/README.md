@@ -111,6 +111,8 @@ This service provides two main functions:
 
 When set (and `ENABLE_GOOGLE=true`), `GET /auth/methods` will include Google and the frontend can start the OAuth flow via `/auth/oauth/google/authorize`.
 
+For `POST /auth/signin/oauth`, use `provider: "google-v2"` for the Firebase-native `signInWithIdp` flow (supports existing-account merge/linking behavior). Legacy `provider: "google"` is still available but deprecated.
+
 ### Google OAuth setup (for portal login)
 
 This project uses a **popup OAuth authorization code** flow:
@@ -131,6 +133,19 @@ To enable it you need:
   - `serviceAccount.json`: Firebase Admin SDK service account key (required for `admin.auth()` calls like `createCustomToken`)
 - **Environment**:
   - `ENABLE_GOOGLE=true`
+
+### Generic flow (domain-agnostic)
+
+Use this pattern to avoid exposing a separate auth host in browser navigation:
+
+1. Serve the login UI on any host, for example: `https://login.<env>.<domain>`.
+2. Route `https://login.<env>.<domain>/auth/*` to this authenticator service (ingress reverse proxy path).
+3. Frontend uses same-origin auth URLs (for example `window.location.origin` + `/auth/...`).
+4. OAuth callback stays on the login host (`/auth/callback`), and code exchange happens via `POST /auth/signin/oauth`.
+5. The login app sets an auth cookie (for example `auth_token`), then redirects user back to `returnUrl`.
+6. Protected ingresses call `/validate` using `auth_request`; authenticated users pass without seeing a second login.
+
+This keeps the browser flow host-agnostic and environment-agnostic. Only ingress routing and OAuth redirect URI values change per environment.
 
 ### Kubernetes ConfigMap & Secret
 

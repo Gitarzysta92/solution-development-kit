@@ -8,13 +8,16 @@ import {
   EMAIL_AUTHENTICATION_STRATEGY_FACTORY,
   GITHUB_AUTHENTICATION_STRATEGY_FACTORY,
   GOOGLE_AUTHENTICATION_STRATEGY_FACTORY,
+  GOOGLE_V2_AUTHENTICATION_STRATEGY_FACTORY,
   IDENTITY_AUTH_SERVICE
 } from '../tokens';
 import { GoogleAuthenticationStrategy } from '../strategy/google.strategy';
+import { GoogleV2AuthenticationStrategy } from '../strategy/google-v2.strategy';
 import { SignInOAuthDto } from './models/sign-in-oauth.dto';
 import { buildGoogleAuthorizeUrl, buildGithubAuthorizeUrl } from '../oauth/authorize-url';
 import { EmailAuthenticationStrategyFactory } from '../strategy/email-strategy.factory';
 import { GoogleAuthenticationStrategyFactory } from '../strategy/google-strategy.factory';
+import { GoogleV2AuthenticationStrategyFactory } from '../strategy/google-v2-strategy.factory';
 import { GithubAuthenticationStrategyFactory } from '../strategy/github-strategy.factory';
 import { GithubAuthenticationStrategy } from '../strategy/github.strategy';
 import { AnonymousAuthenticationStrategyFactory } from '../strategy/anonymous-strategy.factory';
@@ -27,6 +30,8 @@ export class AuthController {
     @Inject(IDENTITY_AUTH_SERVICE) private readonly authenticationService: AuthenticatorAuthService,
     private readonly config: ConfigService,
     @Inject(GOOGLE_AUTHENTICATION_STRATEGY_FACTORY) private readonly googleAuthenticationStrategyFactory: GoogleAuthenticationStrategyFactory,
+    @Inject(GOOGLE_V2_AUTHENTICATION_STRATEGY_FACTORY)
+    private readonly googleV2AuthenticationStrategyFactory: GoogleV2AuthenticationStrategyFactory,
     @Inject(GITHUB_AUTHENTICATION_STRATEGY_FACTORY) private readonly githubAuthenticationStrategyFactory: GithubAuthenticationStrategyFactory,
     @Inject(EMAIL_AUTHENTICATION_STRATEGY_FACTORY) private readonly emailAuthenticationStrategyFactory: EmailAuthenticationStrategyFactory,
     @Inject(ANONYMOUS_AUTHENTICATION_STRATEGY_FACTORY) private readonly anonymousAuthenticationStrategyFactory: AnonymousAuthenticationStrategyFactory,
@@ -65,7 +70,9 @@ export class AuthController {
     const { provider, code, redirectUri, codeVerifier } = body;
 
     let strategy: IAuthenticationStrategy;
-    if (GoogleAuthenticationStrategy.appliesTo(provider)) {
+    if (GoogleV2AuthenticationStrategy.appliesTo(provider)) {
+      strategy = this.googleV2AuthenticationStrategyFactory.create(code, redirectUri, codeVerifier ?? '');
+    } else if (GoogleAuthenticationStrategy.appliesTo(provider)) {
       strategy = this.googleAuthenticationStrategyFactory.create(code, redirectUri, codeVerifier ?? '');
     } else if (GithubAuthenticationStrategy.appliesTo(provider)) {
       strategy = this.githubAuthenticationStrategyFactory.create(code, redirectUri);

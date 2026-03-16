@@ -55,6 +55,9 @@ export class FirebaseGoogleCodeExchanger {
     }
 
     const tokens = (await tokenResponse.json()) as any;
+    if (!tokens?.id_token) {
+      return err(new Error('Google token exchange did not return id_token'));
+    }
     const userInfoResponse = await fetch(
       `https://oauth2.googleapis.com/tokeninfo?id_token=${tokens.id_token}`
     );
@@ -69,6 +72,7 @@ export class FirebaseGoogleCodeExchanger {
       name: userInfo.name,
       picture: userInfo.picture,
       emailVerified: userInfo.email_verified === 'true',
+      idToken: tokens.id_token,
     });
   }
 }

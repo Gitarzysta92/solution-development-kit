@@ -5,7 +5,9 @@ export class SignInOAuthDto {
   @IsNotEmpty({ message: 'Provider is required' })
   @IsString()
   @Transform(({ value }) => (typeof value === 'string' ? value.toLowerCase() : value))
-  @IsIn(['google', 'github'], { message: 'Provider must be google or github' })
+  @IsIn(['google', 'google-v2', 'github'], {
+    message: 'Provider must be google, google-v2, or github',
+  })
   provider!: string;
 
   @IsNotEmpty({ message: 'Code is required' })

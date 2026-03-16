@@ -100,6 +100,28 @@ export class FirebaseRestSessionGateway {
     });
   }
 
+  async signInWithIdp(
+    idToken: string,
+    providerId: string,
+    requestUri: string
+  ): Promise<Result<FirebaseAuthSessionDto, Error>> {
+    const apiKey = this.ensureApiKey();
+    if (!apiKey.ok) return apiKey;
+
+    const url = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=${apiKey.value}`;
+    const postBody = new URLSearchParams({
+      id_token: idToken,
+      providerId,
+    }).toString();
+
+    return await this.postJson<FirebaseSignInResponse>(url, {
+      postBody,
+      requestUri,
+      returnSecureToken: true,
+      returnIdpCredential: true,
+    });
+  }
+
   async refresh(refreshToken: string): Promise<Result<FirebaseAuthSessionDto, Error>> {
     const apiKey = this.ensureApiKey();
     if (!apiKey.ok) return apiKey;

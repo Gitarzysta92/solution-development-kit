@@ -4,11 +4,17 @@ import {
   IdentityCreationDto,
 } from '@sdk/features/identity/libs/authentication';
 import { err, isErr, ok, Result } from '@sdk/kernel/standard';
-import { FirebaseUserProvisioner, FirebaseGoogleCodeExchanger, FirebaseTokenGenerator, FirebaseRestSessionGateway } from '@sdk/extras/identity-firebase';
+import {
+  FirebaseUserProvisioner,
+  FirebaseGoogleCodeExchanger,
+  FirebaseTokenGenerator,
+  FirebaseRestSessionGateway,
+} from '@sdk/extras/identity-firebase';
 
+/**
+ * @deprecated Use GoogleAuthenticationStrategyV2 (`provider: google-v2`) instead.
+ */
 export class GoogleAuthenticationStrategy implements IAuthenticationStrategy {
-
-
   static readonly provider = 'google';
   static appliesTo(provider: string): boolean {
     return provider.toLowerCase() === this.provider;
@@ -36,7 +42,7 @@ export class GoogleAuthenticationStrategy implements IAuthenticationStrategy {
 
     const googleUser = userInfoResult.value;
 
-    //TODO: idempotent user creation + should return if user confirmed email
+    // Legacy flow kept for backward compatibility.
     const createdUserResult = await this.firebaseUserProvisioner.createUser(googleUser);
     if (isErr(createdUserResult)) {
       return err(createdUserResult.error);
