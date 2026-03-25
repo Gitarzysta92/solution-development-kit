@@ -186,10 +186,17 @@ function initializeFirebaseAdmin(config: ConfigService): admin.app.App {
       provide: GOOGLE_V2_AUTHENTICATION_STRATEGY_FACTORY,
       useFactory: (
         googleExchanger: FirebaseGoogleCodeExchanger,
+        userProvisioner: FirebaseUserProvisioner,
+        tokenGenerator: FirebaseTokenGenerator,
         restGateway: FirebaseRestSessionGateway
       ) =>
-        new GoogleV2AuthenticationStrategyFactory(googleExchanger, restGateway),
-      inject: [GOOGLE_CODE_EXCHANGER, REST_SESSION_GATEWAY],
+        new GoogleV2AuthenticationStrategyFactory(
+          googleExchanger,
+          userProvisioner,
+          tokenGenerator,
+          restGateway
+        ),
+      inject: [GOOGLE_CODE_EXCHANGER, USER_PROVISIONER, TOKEN_GENERATOR, REST_SESSION_GATEWAY],
     },
     {
       provide: GITHUB_AUTHENTICATION_STRATEGY_FACTORY,

@@ -4,7 +4,12 @@ import {
   IdentityCreationDto,
 } from '@sdk/features/identity/libs/authentication';
 import { err, isErr, ok, Result } from '@sdk/kernel/standard';
-import { FirebaseGoogleCodeExchanger, FirebaseRestSessionGateway } from '@sdk/extras/identity-firebase';
+import {
+  FirebaseGoogleCodeExchanger,
+  FirebaseRestSessionGateway,
+  FirebaseTokenGenerator,
+  FirebaseUserProvisioner,
+} from '@sdk/extras/identity-firebase';
 
 export class GoogleV2AuthenticationStrategy implements IAuthenticationStrategy {
   static readonly provider = 'google-v2';
@@ -18,6 +23,8 @@ export class GoogleV2AuthenticationStrategy implements IAuthenticationStrategy {
     private readonly redirectUri: string,
     private readonly codeVerifier: string,
     private readonly codeExchanger: FirebaseGoogleCodeExchanger,
+    private readonly firebaseUserProvisioner: FirebaseUserProvisioner,
+    private readonly firebaseTokenGenerator: FirebaseTokenGenerator,
     private readonly firebaseRestSessionGateway: FirebaseRestSessionGateway
   ) {}
 
@@ -42,6 +49,42 @@ export class GoogleV2AuthenticationStrategy implements IAuthenticationStrategy {
       this.redirectUri
     );
     if (isErr(sessionResult)) {
+      const errorCode = (sessionResult.error as { code?: string }).code;
+      if (errorCode === 'EMAIL_EXISTS') {
+        const existingUserResult = await this.firebaseUserProvisioner.getUserByEmail(
+          googleUser.email
+        );
+        if (isErr(existingUserResult)) {
+          return err(existingUserResult.error);
+        }
+
+        const tokenResult = await this.firebaseTokenGenerator.generateToken(
+          existingUserResult.value.uid
+        );
+        if (isErr(tokenResult)) {
+          return err(tokenResult.error);
+        }
+
+        const existingSessionResult = await this.firebaseRestSessionGateway.signInWithCustomToken(
+          tokenResult.value
+        );
+        if (isErr(existingSessionResult)) {
+          return err(existingSessionResult.error);
+        }
+
+        return ok({
+          token: existingSessionResult.value.token,
+          uid: existingUserResult.value.uid,
+          email: googleUser.email,
+          provider: GoogleV2AuthenticationStrategy.provider,
+          claim: googleUser.email,
+          identityType: 'email',
+          identityId: existingUserResult.value.uid,
+          kind: 'user',
+          expiresIn: existingSessionResult.value.expiresIn,
+          refreshToken: existingSessionResult.value.refreshToken,
+        });
+      }
       return err(sessionResult.error);
     }
 
